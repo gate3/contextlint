@@ -1,0 +1,6 @@
+---
+description: Alternate package manager note
+alwaysApply: false
+---
+
+Use npm when installing dependencies in CI or locally.

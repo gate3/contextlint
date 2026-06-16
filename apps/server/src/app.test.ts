@@ -131,4 +131,15 @@ describe("API", () => {
     expect(body.stats.rulesRun).toBeGreaterThan(0);
     expect(body.findings.some((f) => f.ruleId === "over-broad")).toBe(true);
   });
+
+  it("GET /demo/scan-project returns fixture path when present", async () => {
+    const app = createApp({ adapters: [] });
+    const res = await app.request("/demo/scan-project");
+    if (res.status === 404) {
+      return;
+    }
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { path: string };
+    expect(body.path).toContain("health-scan-demo");
+  });
 });

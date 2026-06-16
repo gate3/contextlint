@@ -83,6 +83,10 @@ export function searchRecords(
   return getJson(`/search?${params}`);
 }
 
+export function fetchScanDemoProject(): Promise<{ path: string; name: string }> {
+  return getJson("/demo/scan-project");
+}
+
 export type ScanResponse = ScanResult & { preferences: ProjectScanPreferences };
 
 export function runHealthScan(projectPath: string, tool?: ToolId): Promise<ScanResponse> {

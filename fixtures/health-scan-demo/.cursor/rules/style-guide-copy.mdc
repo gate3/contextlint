@@ -1,0 +1,8 @@
+---
+description: Duplicate style guidance
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+Use two-space indentation. Prefer const over let. Export named functions from modules.
+Write small pure functions. Keep components under 200 lines. Use descriptive variable names.

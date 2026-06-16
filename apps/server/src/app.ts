@@ -15,6 +15,7 @@ import os from "node:os";
 import path from "node:path";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { resolveScanDemoProjectPath } from "./paths.js";
 
 export interface AppOptions {
   homedir?: string;
@@ -98,6 +99,14 @@ export function createApp(options: AppOptions = {}) {
 
   app.get("/health", (c) => {
     return c.json({ ok: true, service: "meminspect" });
+  });
+
+  app.get("/demo/scan-project", (c) => {
+    const demoPath = resolveScanDemoProjectPath();
+    if (!demoPath) {
+      return c.json({ error: "Scan demo project not found", code: "NOT_FOUND" }, 404);
+    }
+    return c.json({ path: demoPath, name: "Health Scan demo" });
   });
 
   app.get("/tools", async (c) => {

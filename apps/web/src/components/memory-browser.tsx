@@ -43,6 +43,7 @@ import {
   fetchProjects,
   fetchRecord,
   fetchRecords,
+  fetchScanDemoProject,
   runHealthScan,
   searchRecords,
   snoozeFinding,
@@ -53,6 +54,7 @@ import {
   Brain,
   Database,
   FileText,
+  FlaskConical,
   FolderOpen,
   Lock,
   PenLine,
@@ -251,6 +253,18 @@ export function MemoryBrowser() {
     setRecordFilters(EMPTY_RECORD_FILTERS);
   }, []);
 
+  const handleTryDemo = useCallback(async () => {
+    setError(null);
+    try {
+      const { path: demoPath } = await fetchScanDemoProject();
+      await loadProjectRecords(demoPath);
+      setShowScanPanel(false);
+      setScanResult(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Demo project not available");
+    }
+  }, [loadProjectRecords]);
+
   const handleRunScan = useCallback(async () => {
     if (!selectedPath) {
       return;
@@ -352,6 +366,10 @@ export function MemoryBrowser() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => void handleTryDemo()}>
+            <FlaskConical className="size-4" />
+            Try demo
+          </Button>
           <Button
             variant="default"
             size="sm"
