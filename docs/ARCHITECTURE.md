@@ -51,17 +51,27 @@ Deterministic rules (no LLM in v1): contradictions, cross-project leakage, stale
 
 Assembles memory layers in the order each IDE loads them and estimates token cost per layer.
 
-## API (M0)
+## API (M1)
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/health` | Liveness |
 | GET | `/tools` | Detect installed adapters |
-| GET | `/projects/sources?path=` | List memory sources for a project |
+| GET | `/projects` | List discovered projects (adapters + `~/.meminspect/config.json`) |
+| GET | `/projects/sources?path=` | List memory sources (`tool` optional) |
+| GET | `/projects/records?path=` | List all memory records (`tool` optional) |
 | GET | `/records?path=&id=` | Read a single record |
-| GET | `/search?path=&q=` | Search memory content |
+| GET | `/search?path=&q=` | Search memory content (`tool` optional) |
 
-Server binds to `127.0.0.1:3847` by default.
+Server binds to `127.0.0.1:3847` by default. User overrides live in `~/.meminspect/config.json`.
+
+## Memory source types (UI labels)
+
+| Internal kind | What it is |
+|---------------|------------|
+| `cursor-rules` | `.cursor/rules/*.mdc` project rules |
+| `cursor-learned` | `.cursor/learned_memories.mdc` |
+| `cursor-sqlite-kv` | Read-only keys from Cursor `state.vscdb` (`ItemTable` / `cursorDiskKV`). Internal app state — memory, composer context — **not** full chat history. UI shows **Cursor global DB** vs **Cursor workspace DB**. |
 
 ## Adding a feature
 

@@ -1,5 +1,5 @@
 {
-  "name": "@meminspect/core",
+  "name": "@meminspect/adapter-cursor",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -16,6 +16,9 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@meminspect/core": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.2.3"

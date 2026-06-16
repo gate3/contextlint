@@ -76,7 +76,10 @@ export interface ToolAdapter {
   readonly id: ToolId;
   detect(): Promise<AdapterDetection>;
   listProjects(): Promise<ProjectRef[]>;
+  /** Fast check for whether this tool has memory at a project path (no heavy I/O). */
+  probeProject(ctx: AdapterContext): Promise<boolean>;
   listSources(ctx: AdapterContext): Promise<MemorySource[]>;
+  listRecords(ctx: AdapterContext): Promise<MemoryRecord[]>;
   readRecord(ctx: AdapterContext, recordId: string): Promise<MemoryRecord>;
   search(ctx: AdapterContext, query: string): Promise<SearchHit[]>;
   writeRecord?(

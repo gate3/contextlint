@@ -1,0 +1,9 @@
+---
+description: Sample project rule for tests
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# TypeScript standards
+
+Use strict TypeScript in all packages.

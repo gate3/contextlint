@@ -144,6 +144,31 @@ export class ClaudeCodeAdapter implements ToolAdapter {
     return [];
   }
 
+  async probeProject(ctx: AdapterContext): Promise<boolean> {
+    const projectPath = path.resolve(ctx.projectPath);
+
+    if (await fileExists(path.join(projectPath, "CLAUDE.md"))) {
+      return true;
+    }
+    if (await fileExists(path.join(projectPath, "CLAUDE.local.md"))) {
+      return true;
+    }
+    if (await fileExists(path.join(projectPath, ".mcp.json"))) {
+      return true;
+    }
+
+    const memoryDir = claudeAutoMemoryDir(this.homedir, projectPath);
+    if (await fileExists(memoryDir)) {
+      const entries = await fs.readdir(memoryDir, { withFileTypes: true });
+      if (entries.some((e) => e.isFile() && e.name.endsWith(".md"))) {
+        return true;
+      }
+    }
+
+    const parentFiles = await collectParentClaudeFiles(projectPath);
+    return parentFiles.length > 0;
+  }
+
   async listSources(ctx: AdapterContext): Promise<MemorySource[]> {
     const projectPath = path.resolve(ctx.projectPath);
     const sources: MemorySource[] = [];
