@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import { fileURLToPath } from "node:url";
 import type {
   AdapterContext,
   AdapterDetection,
@@ -57,10 +58,14 @@ function titleFromPath(filePath: string): string {
 }
 
 function normalizeFolderUri(uri: string): string | null {
-  if (uri.startsWith("file://")) {
-    return path.resolve(decodeURIComponent(uri.replace("file://", "")));
+  if (!uri.startsWith("file://")) {
+    return null;
   }
-  return null;
+  try {
+    return path.resolve(fileURLToPath(uri));
+  } catch {
+    return null;
+  }
 }
 
 async function findWorkspaceHashForProject(

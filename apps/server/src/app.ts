@@ -86,10 +86,16 @@ export function createApp(options: AppOptions = {}) {
     }
 
     const bundles = await Promise.all(
-      resolved.adapters.map(async (adapter) => ({
-        tool: adapter.id,
-        sources: await adapter.listSources({ projectPath }),
-      })),
+      resolved.adapters.map(async (adapter) => {
+        try {
+          return {
+            tool: adapter.id,
+            sources: await adapter.listSources({ projectPath }),
+          };
+        } catch {
+          return { tool: adapter.id, sources: [] };
+        }
+      }),
     );
 
     return c.json({ projectPath, bundles });
@@ -108,10 +114,16 @@ export function createApp(options: AppOptions = {}) {
     }
 
     const bundles = await Promise.all(
-      resolved.adapters.map(async (adapter) => ({
-        tool: adapter.id,
-        records: await adapter.listRecords({ projectPath }),
-      })),
+      resolved.adapters.map(async (adapter) => {
+        try {
+          return {
+            tool: adapter.id,
+            records: await adapter.listRecords({ projectPath }),
+          };
+        } catch {
+          return { tool: adapter.id, records: [] };
+        }
+      }),
     );
 
     return c.json({ projectPath, bundles });
@@ -157,10 +169,16 @@ export function createApp(options: AppOptions = {}) {
     }
 
     const bundles = await Promise.all(
-      resolved.adapters.map(async (adapter) => ({
-        tool: adapter.id,
-        hits: await adapter.search({ projectPath }, query),
-      })),
+      resolved.adapters.map(async (adapter) => {
+        try {
+          return {
+            tool: adapter.id,
+            hits: await adapter.search({ projectPath }, query),
+          };
+        } catch {
+          return { tool: adapter.id, hits: [] };
+        }
+      }),
     );
 
     return c.json({ hits: bundles.flatMap((b) => b.hits.map((h) => ({ ...h, tool: b.tool }))) });

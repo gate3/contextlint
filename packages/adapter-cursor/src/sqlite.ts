@@ -57,13 +57,15 @@ export function readCursorSqlite(dbPath: string): SqliteKvEntry[] {
   }
 
   const uri = `file:${dbPath}?mode=ro&immutable=1`;
+  let db: DatabaseSync | undefined;
   try {
-    const db = new DatabaseSync(uri, { readOnly: true });
+    db = new DatabaseSync(uri, { readOnly: true });
     const fromItem = readTable(db, "ItemTable");
     const fromDisk = readTable(db, "cursorDiskKV");
-    db.close();
     return [...fromItem, ...fromDisk];
   } catch {
     return [];
+  } finally {
+    db?.close();
   }
 }

@@ -27,7 +27,7 @@ function parseYamlValue(raw: string): string | boolean | string[] {
   return trimmed.replace(/^['"]|['"]$/g, "");
 }
 
-/** Minimal frontmatter parser for `.mdc` rule files. */
+/** Minimal frontmatter parser for `.mdc` rule files (inline values only; see OCT-2 notes). */
 export function parseMdc(content: string): ParsedMdc {
   if (!content.startsWith("---")) {
     return { frontmatter: {}, body: content };

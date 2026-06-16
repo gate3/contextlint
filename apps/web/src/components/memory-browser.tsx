@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MemoryRecord, ProjectRef, ToolId } from "@meminspect/core";
 import { OpenPathDialog } from "@/components/open-path-dialog";
 import { PanelBody, PanelHeader, PanelShell } from "@/components/panel-shell";
@@ -134,6 +134,8 @@ export function MemoryBrowser() {
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingRecords, setLoadingRecords] = useState(false);
   const [loadingRecord, setLoadingRecord] = useState(false);
+  const latestProjectLoadRef = useRef(0);
+  const latestRecordLoadRef = useRef(0);
 
   const loadProjects = useCallback(async () => {
     setLoadingProjects(true);
@@ -153,6 +155,7 @@ export function MemoryBrowser() {
   }, [loadProjects]);
 
   const loadProjectRecords = useCallback(async (projectPath: string) => {
+    const loadId = ++latestProjectLoadRef.current;
     setLoadingRecords(true);
     setError(null);
     setSelectedRecord(null);
@@ -162,15 +165,22 @@ export function MemoryBrowser() {
     setRecordFilters(EMPTY_RECORD_FILTERS);
     try {
       const { bundles } = await fetchRecords(projectPath);
+      if (loadId !== latestProjectLoadRef.current) {
+        return;
+      }
       const flat = bundles.flatMap((b) =>
         b.records.map((record) => ({ ...record, tool: b.tool })),
       );
       setRecords(flat);
       setSelectedPath(projectPath);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load records");
+      if (loadId === latestProjectLoadRef.current) {
+        setError(err instanceof Error ? err.message : "Failed to load records");
+      }
     } finally {
-      setLoadingRecords(false);
+      if (loadId === latestProjectLoadRef.current) {
+        setLoadingRecords(false);
+      }
     }
   }, []);
 
@@ -179,16 +189,24 @@ export function MemoryBrowser() {
       if (!selectedPath) {
         return;
       }
+      const loadId = ++latestRecordLoadRef.current;
       setSelectedRecordId(record.id);
       setLoadingRecord(true);
       setError(null);
       try {
         const { record: full } = await fetchRecord(selectedPath, record.id, record.tool);
+        if (loadId !== latestRecordLoadRef.current) {
+          return;
+        }
         setSelectedRecord(full);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load record");
+        if (loadId === latestRecordLoadRef.current) {
+          setError(err instanceof Error ? err.message : "Failed to load record");
+        }
       } finally {
-        setLoadingRecord(false);
+        if (loadId === latestRecordLoadRef.current) {
+          setLoadingRecord(false);
+        }
       }
     },
     [selectedPath],
