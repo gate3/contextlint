@@ -26,10 +26,10 @@ importers:
 
   apps/server:
     dependencies:
-      '@contextlint/adapter-claude-code':
+      '@meminspect/adapter-claude-code':
         specifier: workspace:*
         version: link:../../packages/adapter-claude-code
-      '@contextlint/core':
+      '@meminspect/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@hono/node-server':
@@ -79,7 +79,7 @@ importers:
 
   packages/adapter-claude-code:
     dependencies:
-      '@contextlint/core':
+      '@meminspect/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:

@@ -10,7 +10,7 @@ import type {
   ProjectRef,
   SearchHit,
   ToolAdapter,
-} from "@contextlint/core";
+} from "@meminspect/core";
 import {
   claudeAutoMemoryDir,
   claudeUserConfigPath,

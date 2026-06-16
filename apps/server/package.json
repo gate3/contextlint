@@ -1,10 +1,10 @@
 {
-  "name": "@contextlint/server",
+  "name": "@meminspect/server",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "bin": {
-    "contextlint": "./dist/cli.js"
+    "meminspect": "./dist/cli.js"
   },
   "scripts": {
     "dev": "tsx watch src/cli.ts",
@@ -13,8 +13,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@contextlint/adapter-claude-code": "workspace:*",
-    "@contextlint/core": "workspace:*",
+    "@meminspect/adapter-claude-code": "workspace:*",
+    "@meminspect/core": "workspace:*",
     "@hono/node-server": "^1.14.4",
     "hono": "^4.7.11"
   },

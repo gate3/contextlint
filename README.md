@@ -1,12 +1,12 @@
-# Contextlint
+# Meminspect
 
-**Lint your agent's context** — inspect, diagnose, and fix what Cursor and Claude Code actually remember.
+**Inspect your agent's memory** — diagnose and fix what Cursor and Claude Code actually remember.
 
 Local-first and open source. No migration. No cloud required.
 
 ## What it does
 
-Contextlint reads the memory your coding tools already store on disk — rules, auto-memory files, learned memories — and helps you understand what's wrong with it.
+Meminspect reads the memory your coding tools already store on disk — rules, auto-memory files, learned memories — and helps you understand what's wrong with it.
 
 **Health Scan** — find contradictions, cross-project leakage, stale facts, redundant rules, and token bloat.
 
@@ -15,8 +15,8 @@ Contextlint reads the memory your coding tools already store on disk — rules, 
 ## Quickstart
 
 ```bash
-git clone https://github.com/gate3/contextlint.git
-cd contextlint
+git clone https://github.com/gate3/meminspect.git
+cd meminspect
 pnpm install
 pnpm build
 pnpm dev
@@ -46,11 +46,11 @@ macOS first; Linux and Windows support planned.
 
 ## Monorepo packages
 
-Internal workspace packages use the `@contextlint/*` scope (e.g. `@contextlint/core`). They are **not** downloaded from npm — pnpm links them locally via `workspace:*`. Each package is marked `"private": true` and is free to use in this repo. If we publish to npm later, **public** scoped packages are also free; only **private** npm packages require a paid plan.
+Internal workspace packages use the `@meminspect/*` scope (e.g. `@meminspect/core`). They are linked locally via pnpm `workspace:*` — not downloaded from npm. The `@contextlint/*` scope is used by a different project ([contextlint.dev](https://contextlint.dev/)); we intentionally use `@meminspect/*` to avoid collision.
 
 ## Security
 
-Contextlint reads local agent memory, which may contain sensitive project details. The API binds to `127.0.0.1` only. Report security issues privately — do not open public GitHub issues for vulnerabilities.
+Meminspect reads local agent memory, which may contain sensitive project details. The API binds to `127.0.0.1` only. Report security issues privately — do not open public GitHub issues for vulnerabilities.
 
 ## License
 

@@ -28,5 +28,5 @@ Thumbs.db
 coverage/
 .nyc_output/
 
-# Local dev runtime (user config lives at ~/.contextlint/)
-.contextlint/
+# Local dev runtime (user config lives at ~/.meminspect/)
+.meminspect/

@@ -1,7 +1,7 @@
 export function App() {
   return (
     <main style={{ fontFamily: "system-ui, sans-serif", padding: "2rem", maxWidth: 640 }}>
-      <h1>Contextlint</h1>
+      <h1>Meminspect</h1>
       <p>Lint your agent&apos;s context.</p>
       <p>
         UI shell is running. Full project browser ships in{" "}

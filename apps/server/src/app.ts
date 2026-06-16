@@ -1,5 +1,5 @@
-import type { ToolAdapter } from "@contextlint/core";
-import { createClaudeCodeAdapter } from "@contextlint/adapter-claude-code";
+import type { ToolAdapter } from "@meminspect/core";
+import { createClaudeCodeAdapter } from "@meminspect/adapter-claude-code";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -18,7 +18,7 @@ export function createApp(adapters: ToolAdapter[] = createAdapters()) {
   );
 
   app.get("/health", (c) => {
-    return c.json({ ok: true, service: "contextlint" });
+    return c.json({ ok: true, service: "meminspect" });
   });
 
   app.get("/tools", async (c) => {

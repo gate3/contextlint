@@ -32,7 +32,7 @@ Adapters **never**:
 
 - Support macOS first; gate Linux/Windows with `process.platform` branches
 - Use `os.homedir()` — never `~` string concat without expansion
-- Manual overrides from `~/.contextlint/config.json` take precedence
+- Manual overrides from `~/.meminspect/config.json` take precedence
 
 ## Writes
 

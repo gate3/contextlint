@@ -2,7 +2,7 @@
 
 ## Overview
 
-Contextlint is a local dev tool with two main surfaces:
+Meminspect is a local dev tool with two main surfaces:
 
 1. **API server** — discovers IDE memory on disk, runs scans, serves records
 2. **Web UI** — browse memory, view scan results, preview session load
@@ -16,7 +16,7 @@ Browser UI  →  API server  →  Tool adapters  →  Local files / SQLite
 ## Monorepo layout
 
 ```
-contextlint/
+meminspect/
 ├── apps/
 │   ├── server/          # Hono API + CLI
 │   └── web/             # Vite + React UI

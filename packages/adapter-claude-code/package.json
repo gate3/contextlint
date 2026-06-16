@@ -1,5 +1,5 @@
 {
-  "name": "@contextlint/adapter-claude-code",
+  "name": "@meminspect/adapter-claude-code",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -18,7 +18,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@contextlint/core": "workspace:*"
+    "@meminspect/core": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.2.3"

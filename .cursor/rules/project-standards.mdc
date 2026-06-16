@@ -1,13 +1,13 @@
 ---
-description: Core standards for Contextlint — OSS local agent memory tool
+description: Core standards for Meminspect — OSS local agent memory tool
 alwaysApply: true
 ---
 
-# Contextlint project standards
+# Meminspect project standards
 
 ## Product context
 
-Contextlint inspects native IDE agent memory (Cursor, Claude Code). Killer features: **Health Scan** and **Session Load Preview**. Not a chat browser. Not a replacement memory layer.
+Meminspect inspects native IDE agent memory (Cursor, Claude Code). Killer features: **Health Scan** and **Session Load Preview**. Not a chat browser. Not a replacement memory layer.
 
 Read `docs/ARCHITECTURE.md` before large changes.
 

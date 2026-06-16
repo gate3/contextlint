@@ -1,6 +1,6 @@
-# Contributing to Contextlint
+# Contributing to Meminspect
 
-Thanks for helping build Contextlint. Quality and safety matter — this tool reads real agent memory on developers' machines.
+Thanks for helping build Meminspect. Quality and safety matter — this tool reads real agent memory on developers' machines.
 
 ## Setup
 
