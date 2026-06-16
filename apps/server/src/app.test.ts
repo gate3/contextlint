@@ -63,10 +63,11 @@ describe("API", () => {
             {
               id: "claude-md::CLAUDE.md",
               source: "claude-md",
+              path: "/tmp/demo/CLAUDE.md",
               kind: "markdown",
               title: "CLAUDE.md",
               content: "hello",
-              metadata: { writable: true, path: "/tmp/demo/CLAUDE.md" },
+              metadata: { scope: "project", tool: "claude-code", writable: true },
             },
           ],
           readRecord: async () => {
