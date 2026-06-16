@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MemoryRecord, ProjectRef, ToolId } from "@meminspect/core";
+import { OpenPathDialog } from "@/components/open-path-dialog";
 import { PanelBody, PanelHeader, PanelShell } from "@/components/panel-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -14,6 +22,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { appIcon, toolIcon, toolLabel } from "@/lib/icons";
+import {
+  filterProjects,
+  isRecordEmpty,
+  type ProjectSort,
+  recordDisplayTitle,
+  sortProjects,
+  sortRecordsForDisplay,
+  sourceDescription,
+  sourceLabel,
+} from "@/lib/memory-labels";
 import { cn } from "@/lib/utils";
 import {
   fetchProjects,
@@ -22,6 +40,7 @@ import {
   searchRecords,
 } from "@/api";
 import {
+  ArrowDownAZ,
   Brain,
   Database,
   FileText,
@@ -37,8 +56,19 @@ type FlatRecord = MemoryRecord & { tool: ToolId };
 
 const AppIcon = appIcon();
 
+const PROJECT_SORT_OPTIONS: { value: ProjectSort; label: string }[] = [
+  { value: "name-asc", label: "Name (A → Z)" },
+  { value: "name-desc", label: "Name (Z → A)" },
+  { value: "path-asc", label: "Path (A → Z)" },
+  { value: "path-desc", label: "Path (Z → A)" },
+  { value: "tools-desc", label: "Most tools first" },
+];
+
 function RecordMetaBadges({ record }: { record: FlatRecord | MemoryRecord }) {
   const ToolIcon = "tool" in record ? toolIcon(record.tool) : FileText;
+  const label = sourceLabel(record.source, record);
+  const description = sourceDescription(record.source);
+  const empty = isRecordEmpty(record);
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -48,9 +78,29 @@ function RecordMetaBadges({ record }: { record: FlatRecord | MemoryRecord }) {
           {toolLabel(record.tool)}
         </Badge>
       ) : null}
-      <Badge variant="outline" className="text-[10px] font-medium">
-        {record.source}
-      </Badge>
+      {description ? (
+        <Tooltip>
+          <TooltipTrigger
+            className={cn(
+              "inline-flex cursor-help items-center rounded-full border px-2 py-0.5 text-[10px] font-medium",
+            )}
+          >
+            <Badge variant="outline" className="border-0 p-0 text-[10px] font-medium">
+              {label}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs text-xs">{description}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <Badge variant="outline" className="text-[10px] font-medium">
+          {label}
+        </Badge>
+      )}
+      {empty ? (
+        <Badge variant="secondary" className="text-[10px] font-medium text-muted-foreground">
+          empty
+        </Badge>
+      ) : null}
       <Badge
         variant={record.metadata.writable ? "default" : "secondary"}
         className="gap-1 text-[10px] font-medium"
@@ -74,7 +124,8 @@ export function MemoryBrowser() {
   const [selectedRecord, setSelectedRecord] = useState<MemoryRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchHits, setSearchHits] = useState<string[] | null>(null);
-  const [manualPath, setManualPath] = useState("");
+  const [projectSearch, setProjectSearch] = useState("");
+  const [projectSort, setProjectSort] = useState<ProjectSort>("name-asc");
   const [error, setError] = useState<string | null>(null);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingRecords, setLoadingRecords] = useState(false);
@@ -102,6 +153,7 @@ export function MemoryBrowser() {
     setError(null);
     setSelectedRecord(null);
     setSelectedRecordId(null);
+    setSearchQuery("");
     setSearchHits(null);
     try {
       const { bundles } = await fetchRecords(projectPath);
@@ -139,7 +191,6 @@ export function MemoryBrowser() {
 
   const runSearch = useCallback(async () => {
     if (!selectedPath || !searchQuery.trim()) {
-      setSearchHits(null);
       return;
     }
     setError(null);
@@ -151,12 +202,25 @@ export function MemoryBrowser() {
     }
   }, [searchQuery, selectedPath]);
 
+  const clearMemorySearch = useCallback(() => {
+    setSearchQuery("");
+    setSearchHits(null);
+  }, []);
+
+  const isMemorySearchActive = searchQuery.trim().length > 0 || searchHits !== null;
+
+  const filteredProjects = useMemo((): ProjectRef[] => {
+    const filtered = filterProjects(projects, projectSearch);
+    return sortProjects(filtered, projectSort);
+  }, [projects, projectSearch, projectSort]);
+
   const visibleRecords = useMemo(() => {
-    if (!searchHits) {
-      return records;
+    let list = records;
+    if (searchHits !== null) {
+      const hitSet = new Set(searchHits);
+      list = records.filter((r) => hitSet.has(r.id));
     }
-    const hitSet = new Set(searchHits);
-    return records.filter((r) => hitSet.has(r.id));
+    return sortRecordsForDisplay(list);
   }, [records, searchHits]);
 
   const selectedProject = projects.find((p) => p.path === selectedPath);
@@ -175,20 +239,51 @@ export function MemoryBrowser() {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => void loadProjects()}>
-          <RefreshCw className="size-4" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <OpenPathDialog onOpen={(p) => void loadProjectRecords(p)} />
+          <Button variant="outline" size="sm" onClick={() => void loadProjects()}>
+            <RefreshCw className="size-4" />
+            Refresh
+          </Button>
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1">
-        {/* Projects sidebar */}
         <PanelShell className="w-72 shrink-0 border-r">
           <PanelHeader
             title="Projects"
-            description={`${projects.length} discovered`}
+            description={`${filteredProjects.length} of ${projects.length}`}
             icon={<FolderOpen className="size-4" />}
-          />
+          >
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Filter projects…"
+                  value={projectSearch}
+                  onChange={(e) => setProjectSearch(e.target.value)}
+                  className="h-9 pl-9"
+                />
+              </div>
+              <Select
+                value={projectSort}
+                onValueChange={(value) => setProjectSort(value as ProjectSort)}
+              >
+                <SelectTrigger size="sm" className="w-full">
+                  <ArrowDownAZ className="size-3.5 shrink-0 text-muted-foreground" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROJECT_SORT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </PanelHeader>
           <PanelBody>
             <ScrollArea className="h-full">
               <div className="space-y-1 p-2">
@@ -196,13 +291,17 @@ export function MemoryBrowser() {
                   Array.from({ length: 4 }).map((_, i) => (
                     <Skeleton key={i} className="h-14 w-full rounded-lg" />
                   ))
-                ) : projects.length === 0 ? (
+                ) : filteredProjects.length === 0 ? (
                   <div className="px-2 py-8 text-center">
                     <FolderOpen className="mx-auto size-8 text-muted-foreground/60" />
-                    <p className="mt-2 text-sm text-muted-foreground">No projects discovered yet.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {projects.length === 0
+                        ? "No projects discovered yet."
+                        : "No projects match your filter."}
+                    </p>
                   </div>
                 ) : (
-                  projects.map((project) => {
+                  filteredProjects.map((project) => {
                     const active = selectedPath === project.path;
                     return (
                       <button
@@ -243,33 +342,8 @@ export function MemoryBrowser() {
               </div>
             </ScrollArea>
           </PanelBody>
-          <div className="shrink-0 space-y-2 border-t border-sidebar-border p-3">
-            <p className="text-xs font-medium text-muted-foreground">Open by path</p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="/path/to/project"
-                value={manualPath}
-                onChange={(e) => setManualPath(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && manualPath.trim()) {
-                    void loadProjectRecords(manualPath.trim());
-                  }
-                }}
-                className="h-8 text-xs"
-              />
-              <Button
-                size="sm"
-                variant="secondary"
-                className="shrink-0"
-                onClick={() => manualPath.trim() && void loadProjectRecords(manualPath.trim())}
-              >
-                Open
-              </Button>
-            </div>
-          </div>
         </PanelShell>
 
-        {/* Records sidebar */}
         <PanelShell className="w-80 shrink-0 border-r">
           <PanelHeader
             title="Memory records"
@@ -303,8 +377,8 @@ export function MemoryBrowser() {
                   size="sm"
                   variant="outline"
                   className="w-full"
-                  onClick={() => setSearchHits(null)}
-                  disabled={!searchHits}
+                  onClick={clearMemorySearch}
+                  disabled={!selectedPath || !isMemorySearchActive}
                 >
                   <X className="size-4" />
                   Clear
@@ -329,11 +403,24 @@ export function MemoryBrowser() {
                 ) : visibleRecords.length === 0 ? (
                   <div className="px-2 py-8 text-center">
                     <FileText className="mx-auto size-8 text-muted-foreground/60" />
-                    <p className="mt-2 text-sm text-muted-foreground">No records found.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {searchHits !== null ? "No records match your search." : "No records found."}
+                    </p>
+                    {searchHits !== null ? (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="mt-2"
+                        onClick={clearMemorySearch}
+                      >
+                        Clear search
+                      </Button>
+                    ) : null}
                   </div>
                 ) : (
                   visibleRecords.map((record) => {
                     const active = selectedRecordId === record.id;
+                    const empty = isRecordEmpty(record);
                     return (
                       <button
                         key={`${record.tool}-${record.id}`}
@@ -344,9 +431,17 @@ export function MemoryBrowser() {
                           active
                             ? "border-primary/40 bg-accent"
                             : "border-transparent hover:bg-accent/50",
+                          empty && "opacity-70",
                         )}
                       >
-                        <div className="truncate text-sm font-medium">{record.title}</div>
+                        <div className="truncate text-sm font-medium">
+                          {recordDisplayTitle(record)}
+                        </div>
+                        {record.source === "cursor-sqlite-kv" ? (
+                          <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
+                            {record.title}
+                          </p>
+                        ) : null}
                         <div className="mt-2">
                           <RecordMetaBadges record={record} />
                         </div>
@@ -359,7 +454,6 @@ export function MemoryBrowser() {
           </PanelBody>
         </PanelShell>
 
-        {/* Record detail */}
         <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
           {loadingRecord ? (
             <div className="space-y-4 p-6">
@@ -376,19 +470,34 @@ export function MemoryBrowser() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <h2 className="truncate text-lg font-semibold tracking-tight">
-                      {selectedRecord.title}
+                      {recordDisplayTitle(selectedRecord)}
                     </h2>
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      <Badge variant="outline">{selectedRecord.source}</Badge>
+                      <Badge variant="outline">
+                        {sourceLabel(selectedRecord.source, selectedRecord)}
+                      </Badge>
                       <Badge variant="secondary">{selectedRecord.metadata.scope}</Badge>
-                      <Badge variant="outline">{selectedRecord.kind}</Badge>
+                      {isRecordEmpty(selectedRecord) ? (
+                        <Badge variant="secondary">empty</Badge>
+                      ) : null}
                     </div>
+                    {selectedRecord.source === "cursor-sqlite-kv" ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {sourceDescription("cursor-sqlite-kv")}
+                      </p>
+                    ) : null}
                     <Tooltip>
-                      <TooltipTrigger className="mt-2 block w-full truncate text-left text-xs text-muted-foreground">
+                      <TooltipTrigger className="mt-2 block w-full truncate text-left font-mono text-xs text-muted-foreground">
                         {selectedRecord.path}
+                        {selectedRecord.kind === "sqlite-kv"
+                          ? ` · key: ${selectedRecord.title}`
+                          : ""}
                       </TooltipTrigger>
                       <TooltipContent className="max-w-lg break-all">
                         {selectedRecord.path}
+                        {selectedRecord.kind === "sqlite-kv"
+                          ? `\nKey: ${selectedRecord.title}`
+                          : ""}
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -404,9 +513,13 @@ export function MemoryBrowser() {
                     </CardHeader>
                     <Separator />
                     <CardContent className="pt-4">
-                      <pre className="whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-foreground/90">
-                        {selectedRecord.content}
-                      </pre>
+                      {isRecordEmpty(selectedRecord) ? (
+                        <p className="text-sm text-muted-foreground italic">This file is empty.</p>
+                      ) : (
+                        <pre className="whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-foreground/90">
+                          {selectedRecord.content}
+                        </pre>
+                      )}
                     </CardContent>
                   </Card>
                 </ScrollArea>
@@ -419,8 +532,8 @@ export function MemoryBrowser() {
               </div>
               <h2 className="mt-4 text-base font-medium">No record selected</h2>
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Choose a memory record from the list to inspect rules, learned memories, and SQLite
-                entries.
+                Choose a memory record from the list to inspect rules, learned memories, and Cursor
+                database entries.
               </p>
             </div>
           )}

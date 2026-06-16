@@ -65,6 +65,14 @@ Assembles memory layers in the order each IDE loads them and estimates token cos
 
 Server binds to `127.0.0.1:3847` by default. User overrides live in `~/.meminspect/config.json`.
 
+## Memory source types (UI labels)
+
+| Internal kind | What it is |
+|---------------|------------|
+| `cursor-rules` | `.cursor/rules/*.mdc` project rules |
+| `cursor-learned` | `.cursor/learned_memories.mdc` |
+| `cursor-sqlite-kv` | Read-only keys from Cursor `state.vscdb` (`ItemTable` / `cursorDiskKV`). Internal app state — memory, composer context — **not** full chat history. UI shows **Cursor global DB** vs **Cursor workspace DB**. |
+
 ## Adding a feature
 
 1. Types in `packages/core`
