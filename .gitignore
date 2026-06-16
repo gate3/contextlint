@@ -1,0 +1,32 @@
+# Internal planning — local only
+docs/TECHNICAL.md
+docs/MVP.md
+docs/LINEAR.md
+
+# Dependencies & build
+node_modules/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# OS & editors
+.DS_Store
+Thumbs.db
+.obsidian/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs & coverage
+*.log
+coverage/
+.nyc_output/
+
+# Local dev runtime (user config lives at ~/.contextlint/)
+.contextlint/

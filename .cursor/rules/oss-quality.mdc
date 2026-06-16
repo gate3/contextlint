@@ -1,0 +1,36 @@
+---
+description: OSS quality bar — tests, CI, PRs, contributor experience
+alwaysApply: true
+---
+
+# OSS quality
+
+## Before merging
+
+- [ ] `pnpm lint` passes
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm test` passes
+- [ ] New behavior has tests (especially scan rules and WriteGuard)
+- [ ] No user memory content in logs, fixtures use synthetic data only
+
+## Public surface
+
+- Exported types and APIs must be documented in JSDoc or README
+- Breaking changes need a note in PR description
+- Dependencies: prefer small, maintained packages; justify new deps in PR
+
+## Contributor docs
+
+- `CONTRIBUTING.md` — how to run, test, open PR
+- `docs/ARCHITECTURE.md` — public architecture overview
+
+## License
+
+MIT for OSS core. Third-party licenses respected in NOTICE if needed.
+
+## Release checklist (M5+)
+
+- Version bump in `package.json`
+- CHANGELOG entry
+- README quickstart verified on clean macOS install
+- No secrets or real user paths in repo

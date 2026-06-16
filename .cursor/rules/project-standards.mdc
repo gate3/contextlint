@@ -1,0 +1,45 @@
+---
+description: Core standards for Contextlint — OSS local agent memory tool
+alwaysApply: true
+---
+
+# Contextlint project standards
+
+## Product context
+
+Contextlint inspects native IDE agent memory (Cursor, Claude Code). Killer features: **Health Scan** and **Session Load Preview**. Not a chat browser. Not a replacement memory layer.
+
+Read `docs/ARCHITECTURE.md` before large changes.
+
+## Code principles
+
+- **Minimize scope** — smallest correct change; no premature abstractions
+- **Adapter isolation** — tool-specific paths and parsing live only in `packages/adapter-*`
+- **Safety first** — all writes go through `WriteGuard`; backup before mutate
+- **Heuristics over LLM** — v1 scan rules are deterministic; label uncertain findings clearly
+- **Local-only** — bind `127.0.0.1`; no telemetry in OSS core
+
+## Monorepo
+
+- `packages/core` — no imports from adapters or apps
+- `packages/adapter-*` — depend on `core` only
+- `apps/server` — wires adapters; exposes API
+- `apps/web` — UI only; no direct filesystem access
+
+## OSS hygiene
+
+- Public API types live in `packages/core` and are exported explicitly
+- User memory content must never appear in logs, test output, or error messages
+- Add tests for every new scan rule and write-path change
+- Update `docs/ARCHITECTURE.md` when public architecture changes
+
+## SQLite (Cursor)
+
+- Default: read-only with `immutable=1`
+- Never write `state.vscdb` unless config explicitly enables it and Cursor is not running
+- Prefer editing markdown-backed memory over SQLite KV
+
+## Commits
+
+- Conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `chore:`
+- One logical change per commit

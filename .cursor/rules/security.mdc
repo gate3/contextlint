@@ -1,0 +1,31 @@
+---
+description: Security rules for local memory inspector
+globs: "apps/server/**/*"
+alwaysApply: false
+---
+
+# Security
+
+## Network
+
+- Bind API to `127.0.0.1` only — never `0.0.0.0` in default config
+- No outbound telemetry in OSS core
+- CORS: localhost origins only
+
+## Data handling
+
+- User memory may contain secrets (URLs, keys, internal names) — treat as confidential
+- Never log `MemoryRecord.content` at info level
+- Error responses must not echo file contents
+- Tests use synthetic fixtures only
+
+## Writes
+
+- All mutations through WriteGuard
+- Backup before every write
+- Refuse Cursor SQLite writes when Cursor process detected (best-effort)
+- Validate paths stay within allowed roots (no `../` escape)
+
+## Dependencies
+
+- Run `pnpm audit` before release; fix high/critical or document exception

@@ -1,0 +1,40 @@
+---
+description: Rules for tool adapters (Cursor, Claude Code)
+globs: "packages/adapter-*/**/*"
+alwaysApply: false
+---
+
+# Tool adapters
+
+## Responsibilities
+
+Adapters **only**:
+
+- Discover install paths per OS
+- Map workspaces → project folders
+- List/read (and optionally write) memory sources for that tool
+- Return normalized `MemoryRecord` and `PreviewLayer` data
+
+Adapters **never**:
+
+- Implement scan rules (that is `packages/core`)
+- Import from `apps/web`
+- Hardcode UI strings
+
+## Adding a source
+
+1. Add to `MemorySource` union in `core`
+2. Implement `listSources` + `readRecord`
+3. Add fixture tree + snapshot test
+4. Document path in `docs/TECHNICAL.md`
+
+## Path discovery
+
+- Support macOS first; gate Linux/Windows with `process.platform` branches
+- Use `os.homedir()` — never `~` string concat without expansion
+- Manual overrides from `~/.contextlint/config.json` take precedence
+
+## Writes
+
+- Only markdown/json files in v1
+- Delegate to `WriteGuard` from server — adapters return `writable: boolean` metadata

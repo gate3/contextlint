@@ -1,0 +1,38 @@
+---
+description: TypeScript conventions for Contextlint
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript
+
+## Strictness
+
+- `strict: true` everywhere; no `any` without a comment explaining why
+- Prefer `unknown` over `any` at boundaries
+- Use `satisfies` for config objects; export public types from `packages/core`
+
+## Style
+
+- Named exports over default exports
+- Async functions must handle errors; never empty `catch`
+- Use `Result<T, E>` or thrown domain errors — pick one per layer, stay consistent
+
+## File layout
+
+```typescript
+// 1. types
+// 2. constants
+// 3. helpers
+// 4. main export
+```
+
+## Naming
+
+- `ScanRule`, `ToolAdapter`, `MemoryRecord` — match TECHNICAL.md domain terms
+- Files: `kebab-case.ts`; types/interfaces: `PascalCase`
+
+## Tests
+
+- Colocate: `foo.ts` → `foo.test.ts`
+- Fixtures in `fixtures/`; never use real user paths in tests

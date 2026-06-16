@@ -1,0 +1,31 @@
+---
+description: Testing standards for Contextlint
+globs: "**/*.{test,spec}.{ts,tsx}"
+alwaysApply: false
+---
+
+# Testing
+
+## Framework
+
+Vitest. Run with `pnpm test`.
+
+## Required coverage
+
+| Change type | Test requirement |
+|-------------|------------------|
+| New scan rule | Unit test with fixture strings; assert finding severity + recordIds |
+| Adapter path logic | Snapshot or fixture tree under `packages/*/fixtures/` |
+| WriteGuard | Test backup created, undo restores, sqlite write blocked by default |
+| API route | `app.request()` integration test |
+
+## Fixtures
+
+- Use synthetic memory text — never copy real user rules or MEMORY.md
+- Fixture dirs: `packages/adapter-cursor/fixtures/`, `packages/adapter-claude-code/fixtures/`
+- Keep fixtures minimal (one concern per fixture)
+
+## Assertions
+
+- Prefer exact match on `ruleId` and `severity`
+- Avoid testing implementation details; test observable outputs

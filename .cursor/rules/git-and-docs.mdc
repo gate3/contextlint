@@ -1,0 +1,21 @@
+---
+description: Git and documentation conventions
+alwaysApply: true
+---
+
+# Git and documentation
+
+## Do not commit
+
+- `docs/TECHNICAL.md`, `docs/MVP.md`, `docs/LINEAR.md` — internal planning (gitignored)
+- `.env`, credentials, real user memory exports
+- `.obsidian/`, `node_modules/`, `dist/`
+
+## Public docs
+
+- `README.md`, `CONTRIBUTING.md`, `LICENSE`
+- `docs/ARCHITECTURE.md` — contributor-facing design overview
+
+## Commits
+
+Conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `chore:`

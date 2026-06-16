@@ -1,0 +1,60 @@
+# Architecture
+
+## Overview
+
+Contextlint is a local dev tool with two main surfaces:
+
+1. **API server** — discovers IDE memory on disk, runs scans, serves records
+2. **Web UI** — browse memory, view scan results, preview session load
+
+```
+Browser UI  →  API server  →  Tool adapters  →  Local files / SQLite
+                    ↓
+              Scan engine + Session preview
+```
+
+## Monorepo layout
+
+```
+contextlint/
+├── apps/
+│   ├── server/          # Hono API + CLI
+│   └── web/             # Vite + React UI
+├── packages/
+│   ├── core/            # Types, scan engine, preview, WriteGuard
+│   ├── adapter-cursor/
+│   └── adapter-claude-code/
+└── docs/
+```
+
+## Stack
+
+TypeScript, Node 22+, Hono, Vite, React, Tailwind, Vitest, ESLint, Prettier.
+
+## Design rules
+
+1. **Adapters own tool paths** — Cursor and Claude Code parsing stays in `packages/adapter-*`; core is tool-agnostic
+2. **All writes go through WriteGuard** — backup before every mutation; single-step undo
+3. **Cursor SQLite is read-only by default** — markdown files are the safe edit path
+4. **Localhost only** — API binds to `127.0.0.1`; no telemetry in OSS core
+5. **Never log memory content** — user rules and memory files may contain secrets
+
+## Adapter interface
+
+Each tool adapter implements discovery, listing sources, reading records, and optional writes. All adapters return normalized `MemoryRecord` objects so the scan engine and UI stay tool-agnostic.
+
+## Health Scan
+
+Deterministic rules (no LLM in v1): contradictions, cross-project leakage, stale dependencies vs `package.json`, redundant rules, over-broad rules, token budget estimates.
+
+## Session Load Preview
+
+Assembles memory layers in the order each IDE loads them and estimates token cost per layer.
+
+## Adding a feature
+
+1. Types in `packages/core`
+2. Adapter changes in `packages/adapter-*` with fixture tests
+3. API route in `apps/server`
+4. UI in `apps/web`
+5. Tests for scan rules and any write path

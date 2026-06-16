@@ -1,0 +1,32 @@
+---
+description: API server and web UI conventions
+globs: "apps/**/*"
+alwaysApply: false
+---
+
+# API and UI
+
+## Server (`apps/server`)
+
+- Hono routes stay thin — call `core` or adapters
+- Validate request bodies with Zod
+- Return JSON errors: `{ error: string, code: string }`
+- CORS: allow only `localhost` origins in dev
+
+## Web (`apps/web`)
+
+- Fetch via typed client generated from route shapes or shared types in `core`
+- Show severity badges for scan findings: error / warning / info
+- Editor: warn before save if record is `writable: false`
+- Never store memory content in `localStorage`
+
+## UX priorities
+
+1. Health Scan results — primary screen after project select
+2. Session Preview — secondary panel or tab
+3. Raw file browser — tertiary; collapsible
+
+## Accessibility
+
+- Keyboard navigable scan results list
+- Sufficient contrast on severity colors
