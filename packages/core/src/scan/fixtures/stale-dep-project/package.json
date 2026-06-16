@@ -1,0 +1,7 @@
+{
+  "name": "stale-dep-fixture",
+  "private": true,
+  "dependencies": {
+    "react": "^18.3.0"
+  }
+}

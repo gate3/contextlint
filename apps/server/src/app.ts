@@ -1,8 +1,18 @@
 import type { ToolAdapter, ToolId } from "@meminspect/core";
 import { createClaudeCodeAdapter } from "@meminspect/adapter-claude-code";
 import { createCursorAdapter } from "@meminspect/adapter-cursor";
-import { discoverProjects, loadMeminspectConfig } from "@meminspect/core";
+import {
+  discoverProjects,
+  getProjectPreferences,
+  loadMeminspectConfig,
+  loadSnoozeStore,
+  saveSnoozeStore,
+  scanProject,
+  setProjectPreferences,
+  type ScannedRecord,
+} from "@meminspect/core";
 import os from "node:os";
+import path from "node:path";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -44,6 +54,34 @@ function toolIdFromRecord(recordId: string): ToolId {
     return "cursor";
   }
   return "claude-code";
+}
+
+async function loadProjectRecords(
+  adapters: ToolAdapter[],
+  projectPath: string,
+  tool?: string,
+): Promise<ScannedRecord[]> {
+  const resolved = resolveAdapters(adapters, tool);
+  if (resolved.error) {
+    throw new Error(resolved.error.message);
+  }
+
+  const bundles = await Promise.all(
+    resolved.adapters.map(async (adapter) => {
+      try {
+        return {
+          tool: adapter.id,
+          records: await adapter.listRecords({ projectPath }),
+        };
+      } catch {
+        return { tool: adapter.id, records: [] };
+      }
+    }),
+  );
+
+  return bundles.flatMap((b) =>
+    b.records.map((record) => ({ ...record, tool: b.tool })),
+  );
 }
 
 export function createApp(options: AppOptions = {}) {
@@ -182,6 +220,98 @@ export function createApp(options: AppOptions = {}) {
     );
 
     return c.json({ hits: bundles.flatMap((b) => b.hits.map((h) => ({ ...h, tool: b.tool }))) });
+  });
+
+  app.post("/projects/scan", async (c) => {
+    const projectPath = c.req.query("path");
+    if (!projectPath) {
+      return c.json({ error: "Missing query parameter: path", code: "BAD_REQUEST" }, 400);
+    }
+
+    const resolvedPath = path.resolve(projectPath);
+    const tool = c.req.query("tool");
+
+    try {
+      const records = await loadProjectRecords(adapters, resolvedPath, tool);
+      const store = await loadSnoozeStore(homedir);
+      const prefs = getProjectPreferences(store, resolvedPath);
+      const result = await scanProject(resolvedPath, records, {
+        snoozedFindingIds: prefs.snoozedFindingIds,
+        disabledRuleIds: prefs.disabledRuleIds,
+      });
+
+      return c.json({ ...result, preferences: prefs });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Scan failed";
+      return c.json({ error: message, code: "SCAN_FAILED" }, 500);
+    }
+  });
+
+  app.get("/projects/scan/preferences", async (c) => {
+    const projectPath = c.req.query("path");
+    if (!projectPath) {
+      return c.json({ error: "Missing query parameter: path", code: "BAD_REQUEST" }, 400);
+    }
+
+    const store = await loadSnoozeStore(homedir);
+    const prefs = getProjectPreferences(store, path.resolve(projectPath));
+    return c.json({ projectPath: path.resolve(projectPath), preferences: prefs });
+  });
+
+  app.post("/projects/scan/snooze", async (c) => {
+    const body = (await c.req.json().catch(() => null)) as {
+      path?: string;
+      findingId?: string;
+    } | null;
+
+    if (!body?.path || !body.findingId) {
+      return c.json(
+        { error: "Missing body fields: path, findingId", code: "BAD_REQUEST" },
+        400,
+      );
+    }
+
+    const resolvedPath = path.resolve(body.path);
+    const store = await loadSnoozeStore(homedir);
+    const prefs = getProjectPreferences(store, resolvedPath);
+    if (!prefs.snoozedFindingIds.includes(body.findingId)) {
+      prefs.snoozedFindingIds.push(body.findingId);
+    }
+    const next = setProjectPreferences(store, resolvedPath, prefs);
+    await saveSnoozeStore(homedir, next);
+
+    return c.json({ ok: true, preferences: prefs });
+  });
+
+  app.post("/projects/scan/disable-rule", async (c) => {
+    const body = (await c.req.json().catch(() => null)) as {
+      path?: string;
+      ruleId?: string;
+      enabled?: boolean;
+    } | null;
+
+    if (!body?.path || !body.ruleId) {
+      return c.json(
+        { error: "Missing body fields: path, ruleId", code: "BAD_REQUEST" },
+        400,
+      );
+    }
+
+    const resolvedPath = path.resolve(body.path);
+    const store = await loadSnoozeStore(homedir);
+    const prefs = getProjectPreferences(store, resolvedPath);
+    const enabled = body.enabled ?? false;
+
+    if (enabled) {
+      prefs.disabledRuleIds = prefs.disabledRuleIds.filter((id) => id !== body.ruleId);
+    } else if (!prefs.disabledRuleIds.includes(body.ruleId)) {
+      prefs.disabledRuleIds.push(body.ruleId);
+    }
+
+    const next = setProjectPreferences(store, resolvedPath, prefs);
+    await saveSnoozeStore(homedir, next);
+
+    return c.json({ ok: true, preferences: prefs });
   });
 
   return app;

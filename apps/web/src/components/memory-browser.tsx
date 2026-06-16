@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { MemoryRecord, ProjectRef, ToolId } from "@meminspect/core";
+import type { MemoryRecord, ProjectRef, ScanFinding, ToolId } from "@meminspect/core";
 import { OpenPathDialog } from "@/components/open-path-dialog";
 import { PanelBody, PanelHeader, PanelShell } from "@/components/panel-shell";
 import { RecordFilters } from "@/components/record-filters";
+import { ScanResultsPanel } from "@/components/scan-results";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +43,10 @@ import {
   fetchProjects,
   fetchRecord,
   fetchRecords,
+  runHealthScan,
   searchRecords,
+  snoozeFinding,
+  type ScanResponse,
 } from "@/api";
 import {
   ArrowDownAZ,
@@ -54,6 +58,7 @@ import {
   PenLine,
   RefreshCw,
   Search,
+  ShieldCheck,
   X,
 } from "lucide-react";
 
@@ -137,6 +142,9 @@ export function MemoryBrowser() {
   const latestProjectLoadRef = useRef(0);
   const latestRecordLoadRef = useRef(0);
   const latestSearchLoadRef = useRef(0);
+  const [scanResult, setScanResult] = useState<ScanResponse | null>(null);
+  const [showScanPanel, setShowScanPanel] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   const loadProjects = useCallback(async () => {
     setLoadingProjects(true);
@@ -165,6 +173,8 @@ export function MemoryBrowser() {
     setSearchHits(null);
     setRecordFilters(EMPTY_RECORD_FILTERS);
     latestSearchLoadRef.current++;
+    setScanResult(null);
+    setShowScanPanel(false);
     try {
       const { bundles } = await fetchRecords(projectPath);
       if (loadId !== latestProjectLoadRef.current) {
@@ -241,6 +251,62 @@ export function MemoryBrowser() {
     setRecordFilters(EMPTY_RECORD_FILTERS);
   }, []);
 
+  const handleRunScan = useCallback(async () => {
+    if (!selectedPath) {
+      return;
+    }
+    setScanning(true);
+    setError(null);
+    setShowScanPanel(true);
+    try {
+      const result = await runHealthScan(selectedPath);
+      setScanResult(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Scan failed");
+      setShowScanPanel(false);
+    } finally {
+      setScanning(false);
+    }
+  }, [selectedPath]);
+
+  const handleSnoozeFinding = useCallback(
+    async (finding: ScanFinding) => {
+      if (!selectedPath || !scanResult) {
+        return;
+      }
+      try {
+        await snoozeFinding(selectedPath, finding.id);
+        setScanResult({
+          ...scanResult,
+          findings: scanResult.findings.filter((f) => f.id !== finding.id),
+          stats: {
+            ...scanResult.stats,
+            findingsVisible: scanResult.stats.findingsVisible - 1,
+            snoozed: scanResult.stats.snoozed + 1,
+          },
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to snooze finding");
+      }
+    },
+    [selectedPath, scanResult],
+  );
+
+  const handleSelectFinding = useCallback(
+    (finding: ScanFinding) => {
+      const recordId = finding.recordIds[0];
+      if (!recordId) {
+        return;
+      }
+      const record = records.find((r) => r.id === recordId);
+      if (record) {
+        setShowScanPanel(false);
+        void openRecord(record);
+      }
+    },
+    [records, openRecord],
+  );
+
   const isMemorySearchActive =
     searchQuery.trim().length > 0 ||
     searchHits !== null ||
@@ -286,6 +352,15 @@ export function MemoryBrowser() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            disabled={!selectedPath || scanning}
+            onClick={() => void handleRunScan()}
+          >
+            <ShieldCheck className="size-4" />
+            {scanning ? "Scanning…" : "Health Scan"}
+          </Button>
           <OpenPathDialog onOpen={(p) => void loadProjectRecords(p)} />
           <Button variant="outline" size="sm" onClick={() => void loadProjects()}>
             <RefreshCw className="size-4" />
@@ -514,7 +589,25 @@ export function MemoryBrowser() {
         </PanelShell>
 
         <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
-          {loadingRecord ? (
+          {showScanPanel ? (
+            <ScanResultsPanel
+              findings={scanResult?.findings ?? []}
+              stats={
+                scanResult?.stats ?? {
+                  findingsVisible: 0,
+                  findingsTotal: 0,
+                  recordsScanned: 0,
+                  rulesRun: 0,
+                  snoozed: 0,
+                }
+              }
+              scannedAt={scanResult?.scannedAt ?? new Date().toISOString()}
+              loading={scanning}
+              onSelectFinding={handleSelectFinding}
+              onSnooze={(f) => void handleSnoozeFinding(f)}
+              onClose={() => setShowScanPanel(false)}
+            />
+          ) : loadingRecord ? (
             <div className="space-y-4 p-6">
               <Skeleton className="h-8 w-1/3" />
               <Skeleton className="h-4 w-2/3" />

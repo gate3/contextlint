@@ -62,6 +62,10 @@ Assembles memory layers in the order each IDE loads them and estimates token cos
 | GET | `/projects/records?path=` | List all memory records (`tool` optional) |
 | GET | `/records?path=&id=` | Read a single record |
 | GET | `/search?path=&q=` | Search memory content (`tool` optional) |
+| POST | `/projects/scan?path=` | Run health scan (`tool` optional) |
+| GET | `/projects/scan/preferences?path=` | Snooze / disabled-rule preferences |
+| POST | `/projects/scan/snooze` | Snooze a finding (`{ path, findingId }`) |
+| POST | `/projects/scan/disable-rule` | Disable or enable a rule (`{ path, ruleId, enabled? }`) |
 
 Server binds to `127.0.0.1:3847` by default. User overrides live in `~/.meminspect/config.json`.
 
