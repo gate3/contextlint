@@ -12,20 +12,25 @@ Contextlint reads the memory your coding tools already store on disk — rules, 
 
 **Session Load Preview** — see what memory would load on your next session, with a token breakdown.
 
-## Status
-
-Early development. The monorepo scaffold is landing next.
-
 ## Quickstart
 
 ```bash
 git clone https://github.com/gate3/contextlint.git
 cd contextlint
 pnpm install
+pnpm build
 pnpm dev
 ```
 
-_(Available after the initial release.)_
+- API: http://127.0.0.1:3847/health
+- UI shell: http://127.0.0.1:5173
+
+### Try the Claude Code adapter
+
+```bash
+curl "http://127.0.0.1:3847/projects/sources?path=$(pwd)"
+curl "http://127.0.0.1:3847/tools"
+```
 
 ## Supported tools (v1)
 

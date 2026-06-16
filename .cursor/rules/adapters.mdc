@@ -26,7 +26,7 @@ Adapters **never**:
 1. Add to `MemorySource` union in `core`
 2. Implement `listSources` + `readRecord`
 3. Add fixture tree + snapshot test
-4. Document path in `docs/TECHNICAL.md`
+4. Document path in `docs/ARCHITECTURE.md`
 
 ## Path discovery
 

@@ -51,6 +51,18 @@ Deterministic rules (no LLM in v1): contradictions, cross-project leakage, stale
 
 Assembles memory layers in the order each IDE loads them and estimates token cost per layer.
 
+## API (M0)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/health` | Liveness |
+| GET | `/tools` | Detect installed adapters |
+| GET | `/projects/sources?path=` | List memory sources for a project |
+| GET | `/records?path=&id=` | Read a single record |
+| GET | `/search?path=&q=` | Search memory content |
+
+Server binds to `127.0.0.1:3847` by default.
+
 ## Adding a feature
 
 1. Types in `packages/core`
