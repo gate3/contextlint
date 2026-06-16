@@ -226,6 +226,26 @@ export class CursorAdapter implements ToolAdapter {
     return projects.sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  async probeProject(ctx: AdapterContext): Promise<boolean> {
+    const projectPath = path.resolve(ctx.projectPath);
+
+    if (await fileExists(projectLearnedMemoriesPath(projectPath))) {
+      return true;
+    }
+
+    const rulesDir = projectRulesDir(projectPath);
+    if (await fileExists(rulesDir)) {
+      const entries = await fs.readdir(rulesDir, { withFileTypes: true });
+      if (entries.some((e) => e.isFile() && e.name.endsWith(".mdc"))) {
+        return true;
+      }
+    }
+
+    const userDataDir = this.userDataDir();
+    const workspaceHash = await findWorkspaceHashForProject(userDataDir, projectPath);
+    return workspaceHash !== null;
+  }
+
   async listSources(ctx: AdapterContext): Promise<MemorySource[]> {
     const projectPath = path.resolve(ctx.projectPath);
     const sources: MemorySource[] = [];

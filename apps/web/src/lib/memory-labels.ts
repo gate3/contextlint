@@ -1,4 +1,4 @@
-import type { MemoryRecord, MemorySourceKind } from "@meminspect/core";
+import type { MemoryRecord, MemorySourceKind, ToolId } from "@meminspect/core";
 
 const SOURCE_LABELS: Record<MemorySourceKind, string> = {
   "cursor-rules": "Project rule",
@@ -54,7 +54,7 @@ export function sortRecordsForDisplay<T extends MemoryRecord>(records: T[]): T[]
   });
 }
 
-export type ProjectSort = "name-asc" | "name-desc" | "path-asc" | "path-desc" | "tools-desc";
+export type ProjectSort = "name-asc" | "name-desc" | "tools-desc";
 
 export function sortProjects<T extends { name: string; path: string; tools: readonly string[] }>(
   projects: T[],
@@ -65,10 +65,6 @@ export function sortProjects<T extends { name: string; path: string; tools: read
     switch (sort) {
       case "name-desc":
         return b.name.localeCompare(a.name);
-      case "path-asc":
-        return a.path.localeCompare(b.path);
-      case "path-desc":
-        return b.path.localeCompare(a.path);
       case "tools-desc":
         return b.tools.length - a.tools.length || a.name.localeCompare(b.name);
       case "name-asc":
@@ -90,4 +86,109 @@ export function filterProjects<T extends { name: string; path: string }>(
   return projects.filter(
     (p) => p.name.toLowerCase().includes(needle) || p.path.toLowerCase().includes(needle),
   );
+}
+
+export type RecordPlatformFilter = ToolId;
+
+export type RecordTypeFilter =
+  | "rule"
+  | "learned"
+  | "instructions"
+  | "auto-memory"
+  | "db-entry"
+  | "config";
+
+export type RecordAccessFilter = "read-only" | "writable";
+
+export interface RecordFiltersState {
+  platforms: RecordPlatformFilter[];
+  types: RecordTypeFilter[];
+  access: RecordAccessFilter[];
+}
+
+export const EMPTY_RECORD_FILTERS: RecordFiltersState = {
+  platforms: [],
+  types: [],
+  access: [],
+};
+
+export function recordTypeCategory(source: MemorySourceKind): RecordTypeFilter {
+  switch (source) {
+    case "cursor-rules":
+      return "rule";
+    case "cursor-learned":
+      return "learned";
+    case "claude-md":
+    case "claude-md-local":
+    case "claude-md-parent":
+    case "claude-user":
+      return "instructions";
+    case "claude-auto-memory":
+    case "claude-auto-memory-topic":
+      return "auto-memory";
+    case "cursor-sqlite-kv":
+      return "db-entry";
+    case "claude-mcp-config":
+      return "config";
+  }
+}
+
+export const RECORD_TYPE_LABELS: Record<RecordTypeFilter, string> = {
+  rule: "Rules",
+  learned: "Learned memory",
+  instructions: "Instructions",
+  "auto-memory": "Auto memory",
+  "db-entry": "DB entries",
+  config: "Config",
+};
+
+export const RECORD_ACCESS_LABELS: Record<RecordAccessFilter, string> = {
+  "read-only": "Read-only",
+  writable: "Writable",
+};
+
+export function recordAccess(record: MemoryRecord): RecordAccessFilter {
+  return record.metadata.writable ? "writable" : "read-only";
+}
+
+export function matchesRecordFilters(
+  record: MemoryRecord & { tool: ToolId },
+  filters: RecordFiltersState,
+): boolean {
+  if (filters.platforms.length > 0 && !filters.platforms.includes(record.tool)) {
+    return false;
+  }
+  const type = recordTypeCategory(record.source);
+  if (filters.types.length > 0 && !filters.types.includes(type)) {
+    return false;
+  }
+  const access = recordAccess(record);
+  if (filters.access.length > 0 && !filters.access.includes(access)) {
+    return false;
+  }
+  return true;
+}
+
+export function filterRecords<T extends MemoryRecord & { tool: ToolId }>(
+  records: T[],
+  filters: RecordFiltersState,
+): T[] {
+  if (
+    filters.platforms.length === 0 &&
+    filters.types.length === 0 &&
+    filters.access.length === 0
+  ) {
+    return records;
+  }
+  return records.filter((r) => matchesRecordFilters(r, filters));
+}
+
+export function isRecordFiltersActive(filters: RecordFiltersState): boolean {
+  return (
+    filters.platforms.length > 0 || filters.types.length > 0 || filters.access.length > 0
+  );
+}
+
+export function toggleFilterValue<T extends string>(values: T[], value: T): T[] {
+  return values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
 }

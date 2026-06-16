@@ -19,6 +19,7 @@ describe("API", () => {
           listProjects: async () => [
             { id: "p1", path: "/tmp/demo", name: "demo", tools: ["cursor"] },
           ],
+          probeProject: async () => true,
           listSources: async () => [],
           listRecords: async () => [],
           readRecord: async () => {

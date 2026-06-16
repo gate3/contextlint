@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { MemoryRecord, ProjectRef, ToolId } from "@meminspect/core";
 import { OpenPathDialog } from "@/components/open-path-dialog";
 import { PanelBody, PanelHeader, PanelShell } from "@/components/panel-shell";
+import { RecordFilters } from "@/components/record-filters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,9 +24,13 @@ import {
 } from "@/components/ui/tooltip";
 import { appIcon, toolIcon, toolLabel } from "@/lib/icons";
 import {
+  EMPTY_RECORD_FILTERS,
   filterProjects,
+  filterRecords,
   isRecordEmpty,
+  isRecordFiltersActive,
   type ProjectSort,
+  type RecordFiltersState,
   recordDisplayTitle,
   sortProjects,
   sortRecordsForDisplay,
@@ -59,9 +64,7 @@ const AppIcon = appIcon();
 const PROJECT_SORT_OPTIONS: { value: ProjectSort; label: string }[] = [
   { value: "name-asc", label: "Name (A → Z)" },
   { value: "name-desc", label: "Name (Z → A)" },
-  { value: "path-asc", label: "Path (A → Z)" },
-  { value: "path-desc", label: "Path (Z → A)" },
-  { value: "tools-desc", label: "Most tools first" },
+  { value: "tools-desc", label: "Most tools first (Cursor + Claude)" },
 ];
 
 function RecordMetaBadges({ record }: { record: FlatRecord | MemoryRecord }) {
@@ -126,6 +129,7 @@ export function MemoryBrowser() {
   const [searchHits, setSearchHits] = useState<string[] | null>(null);
   const [projectSearch, setProjectSearch] = useState("");
   const [projectSort, setProjectSort] = useState<ProjectSort>("name-asc");
+  const [recordFilters, setRecordFilters] = useState<RecordFiltersState>(EMPTY_RECORD_FILTERS);
   const [error, setError] = useState<string | null>(null);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingRecords, setLoadingRecords] = useState(false);
@@ -155,6 +159,7 @@ export function MemoryBrowser() {
     setSelectedRecordId(null);
     setSearchQuery("");
     setSearchHits(null);
+    setRecordFilters(EMPTY_RECORD_FILTERS);
     try {
       const { bundles } = await fetchRecords(projectPath);
       const flat = bundles.flatMap((b) =>
@@ -205,9 +210,13 @@ export function MemoryBrowser() {
   const clearMemorySearch = useCallback(() => {
     setSearchQuery("");
     setSearchHits(null);
+    setRecordFilters(EMPTY_RECORD_FILTERS);
   }, []);
 
-  const isMemorySearchActive = searchQuery.trim().length > 0 || searchHits !== null;
+  const isMemorySearchActive =
+    searchQuery.trim().length > 0 ||
+    searchHits !== null ||
+    isRecordFiltersActive(recordFilters);
 
   const filteredProjects = useMemo((): ProjectRef[] => {
     const filtered = filterProjects(projects, projectSearch);
@@ -220,7 +229,16 @@ export function MemoryBrowser() {
       const hitSet = new Set(searchHits);
       list = records.filter((r) => hitSet.has(r.id));
     }
+    list = filterRecords(list, recordFilters);
     return sortRecordsForDisplay(list);
+  }, [records, searchHits, recordFilters]);
+
+  const recordsAfterSearch = useMemo(() => {
+    if (searchHits === null) {
+      return records;
+    }
+    const hitSet = new Set(searchHits);
+    return records.filter((r) => hitSet.has(r.id));
   }, [records, searchHits]);
 
   const selectedProject = projects.find((p) => p.path === selectedPath);
@@ -344,13 +362,22 @@ export function MemoryBrowser() {
           </PanelBody>
         </PanelShell>
 
-        <PanelShell className="w-80 shrink-0 border-r">
+        <PanelShell className="w-96 shrink-0 border-r">
           <PanelHeader
             title="Memory records"
-            description={selectedProject ? selectedProject.name : "Select a project"}
+            description={
+              selectedProject
+                ? `${visibleRecords.length} of ${recordsAfterSearch.length} · ${selectedProject.name}`
+                : "Select a project"
+            }
             icon={<Database className="size-4" />}
           >
             <div className="space-y-2">
+              <RecordFilters
+                filters={recordFilters}
+                onChange={setRecordFilters}
+                disabled={!selectedPath}
+              />
               <div className="relative">
                 <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
                 <Input
@@ -404,16 +431,20 @@ export function MemoryBrowser() {
                   <div className="px-2 py-8 text-center">
                     <FileText className="mx-auto size-8 text-muted-foreground/60" />
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {searchHits !== null ? "No records match your search." : "No records found."}
+                      {searchHits !== null
+                        ? "No records match your search."
+                        : isRecordFiltersActive(recordFilters)
+                          ? "No records match your filters."
+                          : "No records found."}
                     </p>
-                    {searchHits !== null ? (
+                    {searchHits !== null || isRecordFiltersActive(recordFilters) ? (
                       <Button
                         variant="link"
                         size="sm"
                         className="mt-2"
                         onClick={clearMemorySearch}
                       >
-                        Clear search
+                        Clear
                       </Button>
                     ) : null}
                   </div>

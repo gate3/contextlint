@@ -27,9 +27,32 @@ function mergeProject(
   });
 }
 
+async function enrichProjectTools(
+  adapters: ToolAdapter[],
+  project: ProjectRef,
+): Promise<ProjectRef> {
+  const toolSet = new Set<ToolId>(project.tools);
+
+  for (const adapter of adapters) {
+    if (toolSet.has(adapter.id)) {
+      continue;
+    }
+    try {
+      const hasMemory = await adapter.probeProject({ projectPath: project.path });
+      if (hasMemory) {
+        toolSet.add(adapter.id);
+      }
+    } catch {
+      // Stale workspace path or unreadable store — keep existing tools.
+    }
+  }
+
+  return { ...project, tools: [...toolSet] };
+}
+
 export async function discoverProjects(
   adapters: ToolAdapter[],
-  homedir: string,
+  _homedir: string,
   config: MeminspectConfig = {},
 ): Promise<ProjectRef[]> {
   const map = new Map<string, ProjectRef>();
@@ -46,5 +69,9 @@ export async function discoverProjects(
     mergeProject(map, entry.path, tools);
   }
 
-  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const projects = [...map.values()];
+  const enriched = await Promise.all(
+    projects.map((project) => enrichProjectTools(adapters, project)),
+  );
+  return enriched.sort((a, b) => a.name.localeCompare(b.name));
 }

@@ -36,16 +36,17 @@ export function OpenPathDialog({ onOpen }: OpenPathDialogProps) {
         render={
           <Button variant="outline" size="sm">
             <FolderInput className="size-4" />
-            Open path
+            Open project
           </Button>
         }
       />
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Open project by path</DialogTitle>
+          <DialogTitle>Open project</DialogTitle>
           <DialogDescription>
-            Inspect memory for any folder on disk, even if Cursor has not registered it in
-            workspace storage.
+            Enter the absolute path to a folder on disk. Meminspect will scan that project for
+            agent memory — Cursor rules, learned memories, internal DB entries, and Claude Code
+            files — even if it does not appear in the discovered projects list.
           </DialogDescription>
         </DialogHeader>
         <Input
@@ -60,7 +61,7 @@ export function OpenPathDialog({ onOpen }: OpenPathDialogProps) {
             Cancel
           </Button>
           <Button onClick={submit} disabled={!path.trim()}>
-            Open
+            Open project
           </Button>
         </DialogFooter>
       </DialogContent>
