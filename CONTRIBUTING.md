@@ -2,6 +2,12 @@
 
 Thanks for helping build Meminspect. Quality and safety matter — this tool reads real agent memory on developers' machines.
 
+## Branch workflow
+
+- **`main`** — stable; merge via PR only
+- **Feature branches** — use the branch name from the Linear issue (`gitBranchName`), e.g. `bluebagelstudios/oct-2-m1-cursor-adapter-discovery-basic-ui`
+- Open a PR against `main` when the milestone is ready for review
+
 ## Setup
 
 ```bash

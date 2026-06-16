@@ -26,15 +26,18 @@ importers:
 
   apps/server:
     dependencies:
-      '@meminspect/adapter-claude-code':
-        specifier: workspace:*
-        version: link:../../packages/adapter-claude-code
-      '@meminspect/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@hono/node-server':
         specifier: ^1.14.4
         version: 1.19.14(hono@4.12.25)
+      '@meminspect/adapter-claude-code':
+        specifier: workspace:*
+        version: link:../../packages/adapter-claude-code
+      '@meminspect/adapter-cursor':
+        specifier: workspace:*
+        version: link:../../packages/adapter-cursor
+      '@meminspect/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       hono:
         specifier: ^4.7.11
         version: 4.12.25
@@ -51,6 +54,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@meminspect/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       react:
         specifier: ^19.1.0
         version: 19.2.7
@@ -58,6 +64,9 @@ importers:
         specifier: ^19.1.0
         version: 19.2.7(react@19.2.7)
     devDependencies:
+      '@types/node':
+        specifier: ^22.15.29
+        version: 22.19.21
       '@types/react':
         specifier: ^19.1.6
         version: 19.2.17
@@ -78,6 +87,16 @@ importers:
         version: 3.2.6(@types/node@22.19.21)(tsx@4.22.4)
 
   packages/adapter-claude-code:
+    dependencies:
+      '@meminspect/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.6(@types/node@22.19.21)(tsx@4.22.4)
+
+  packages/adapter-cursor:
     dependencies:
       '@meminspect/core':
         specifier: workspace:*

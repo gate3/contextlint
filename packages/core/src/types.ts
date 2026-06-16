@@ -77,6 +77,7 @@ export interface ToolAdapter {
   detect(): Promise<AdapterDetection>;
   listProjects(): Promise<ProjectRef[]>;
   listSources(ctx: AdapterContext): Promise<MemorySource[]>;
+  listRecords(ctx: AdapterContext): Promise<MemoryRecord[]>;
   readRecord(ctx: AdapterContext, recordId: string): Promise<MemoryRecord>;
   search(ctx: AdapterContext, query: string): Promise<SearchHit[]>;
   writeRecord?(

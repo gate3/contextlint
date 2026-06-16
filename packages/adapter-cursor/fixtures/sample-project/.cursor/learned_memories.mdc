@@ -1,0 +1,8 @@
+---
+description: Learned memory from agent sessions
+alwaysApply: true
+---
+
+# Learned memories
+
+The project uses Vitest for unit tests.
