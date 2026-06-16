@@ -19,3 +19,9 @@ alwaysApply: true
 ## Commits
 
 Conventional commits: `feat:`, `fix:`, `docs:`, `test:`, `chore:`
+
+## Pull requests (solo project)
+
+- **Do not reply to PR review comments** — no thread replies, no `gh api` comment posts, no review responses on GitHub unless the user explicitly asks.
+- Triage review feedback in chat: fix valid issues in code, push back on invalid ones in the conversation.
+- Creating/updating PRs and pushing branches is fine when requested; engaging reviewers on GitHub is not.
