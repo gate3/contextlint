@@ -44,6 +44,10 @@ macOS first; Linux and Windows support planned.
 - [Architecture](./docs/ARCHITECTURE.md) — how the project is structured
 - [Contributing](./CONTRIBUTING.md) — setup, standards, pull requests
 
+## Monorepo packages
+
+Internal workspace packages use the `@contextlint/*` scope (e.g. `@contextlint/core`). They are **not** downloaded from npm — pnpm links them locally via `workspace:*`. Each package is marked `"private": true` and is free to use in this repo. If we publish to npm later, **public** scoped packages are also free; only **private** npm packages require a paid plan.
+
 ## Security
 
 Contextlint reads local agent memory, which may contain sensitive project details. The API binds to `127.0.0.1` only. Report security issues privately — do not open public GitHub issues for vulnerabilities.
