@@ -51,6 +51,7 @@ import {
 } from "@/api";
 import {
   ArrowDownAZ,
+  ArrowLeft,
   Brain,
   Database,
   FileText,
@@ -146,6 +147,7 @@ export function MemoryBrowser() {
   const latestSearchLoadRef = useRef(0);
   const [scanResult, setScanResult] = useState<ScanResponse | null>(null);
   const [showScanPanel, setShowScanPanel] = useState(false);
+  const [returnToScanPanel, setReturnToScanPanel] = useState(false);
   const [scanning, setScanning] = useState(false);
 
   const loadProjects = useCallback(async () => {
@@ -177,6 +179,7 @@ export function MemoryBrowser() {
     latestSearchLoadRef.current++;
     setScanResult(null);
     setShowScanPanel(false);
+    setReturnToScanPanel(false);
     try {
       const { bundles } = await fetchRecords(projectPath);
       if (loadId !== latestProjectLoadRef.current) {
@@ -314,12 +317,20 @@ export function MemoryBrowser() {
       }
       const record = records.find((r) => r.id === recordId);
       if (record) {
+        setReturnToScanPanel(true);
         setShowScanPanel(false);
         void openRecord(record);
       }
     },
     [records, openRecord],
   );
+
+  const handleBackToScanResults = useCallback(() => {
+    setReturnToScanPanel(false);
+    setSelectedRecord(null);
+    setSelectedRecordId(null);
+    setShowScanPanel(true);
+  }, []);
 
   const isMemorySearchActive =
     searchQuery.trim().length > 0 ||
@@ -577,7 +588,10 @@ export function MemoryBrowser() {
                       <button
                         key={`${record.tool}-${record.id}`}
                         type="button"
-                        onClick={() => void openRecord(record)}
+                        onClick={() => {
+                          setReturnToScanPanel(false);
+                          void openRecord(record);
+                        }}
                         className={cn(
                           "w-full rounded-lg border px-3 py-2.5 text-left transition-colors",
                           active
@@ -623,7 +637,10 @@ export function MemoryBrowser() {
               loading={scanning}
               onSelectFinding={handleSelectFinding}
               onSnooze={(f) => void handleSnoozeFinding(f)}
-              onClose={() => setShowScanPanel(false)}
+              onClose={() => {
+                setShowScanPanel(false);
+                setReturnToScanPanel(false);
+              }}
             />
           ) : loadingRecord ? (
             <div className="space-y-4 p-6">
@@ -634,6 +651,17 @@ export function MemoryBrowser() {
           ) : selectedRecord ? (
             <>
               <div className="shrink-0 border-b border-border px-6 py-4">
+                {returnToScanPanel && scanResult ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="-ml-2 mb-3 h-8 gap-1.5 px-2 text-muted-foreground"
+                    onClick={handleBackToScanResults}
+                  >
+                    <ArrowLeft className="size-4" />
+                    Back to scan results
+                  </Button>
+                ) : null}
                 <div className="flex items-start gap-3">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                     <FileText className="size-5 text-muted-foreground" />

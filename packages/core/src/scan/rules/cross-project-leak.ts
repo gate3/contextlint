@@ -1,4 +1,4 @@
-import path from "node:path";
+import { isProjectPathReference } from "../path-utils.js";
 import { withFindingId } from "../finding-id.js";
 import type { ScanContext, ScanRule } from "../types.js";
 
@@ -9,11 +9,11 @@ export const crossProjectLeakRule: ScanRule = {
   id: "cross-project-leak",
   name: "Cross-project leakage",
   run(ctx: ScanContext) {
-    const resolvedProject = path.resolve(ctx.projectPath);
     const findings = [];
 
     for (const record of ctx.records) {
-      if (!record.content.trim()) {
+      // SQLite KV is Cursor internal state — paths here are not user-authored memory.
+      if (record.source === "cursor-sqlite-kv" || !record.content.trim()) {
         continue;
       }
 
@@ -21,18 +21,18 @@ export const crossProjectLeakRule: ScanRule = {
 
       for (const match of record.content.matchAll(ABS_PATH_RE)) {
         const absPath = match[1];
-        if (!absPath) {
+        if (!absPath || isProjectPathReference(ctx.projectPath, absPath)) {
           continue;
         }
-        const resolved = path.resolve(absPath);
-        if (!resolved.startsWith(resolvedProject + path.sep) && resolved !== resolvedProject) {
-          leaks.push(absPath);
-        }
+        leaks.push(absPath);
       }
 
       for (const match of record.content.matchAll(OTHER_REPO_RE)) {
         const winPath = match[1];
-        if (winPath && !winPath.toLowerCase().includes(ctx.projectName.toLowerCase())) {
+        if (!winPath || isProjectPathReference(ctx.projectPath, winPath)) {
+          continue;
+        }
+        if (!winPath.toLowerCase().includes(ctx.projectName.toLowerCase())) {
           leaks.push(winPath);
         }
       }
