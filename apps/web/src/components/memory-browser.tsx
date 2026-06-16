@@ -136,6 +136,7 @@ export function MemoryBrowser() {
   const [loadingRecord, setLoadingRecord] = useState(false);
   const latestProjectLoadRef = useRef(0);
   const latestRecordLoadRef = useRef(0);
+  const latestSearchLoadRef = useRef(0);
 
   const loadProjects = useCallback(async () => {
     setLoadingProjects(true);
@@ -163,6 +164,7 @@ export function MemoryBrowser() {
     setSearchQuery("");
     setSearchHits(null);
     setRecordFilters(EMPTY_RECORD_FILTERS);
+    latestSearchLoadRef.current++;
     try {
       const { bundles } = await fetchRecords(projectPath);
       if (loadId !== latestProjectLoadRef.current) {
@@ -216,16 +218,24 @@ export function MemoryBrowser() {
     if (!selectedPath || !searchQuery.trim()) {
       return;
     }
+    const loadId = ++latestSearchLoadRef.current;
     setError(null);
     try {
       const { hits } = await searchRecords(selectedPath, searchQuery.trim());
+      if (loadId !== latestSearchLoadRef.current) {
+        return;
+      }
       setSearchHits(hits.map((h) => h.recordId));
     } catch (err) {
+      if (loadId !== latestSearchLoadRef.current) {
+        return;
+      }
       setError(err instanceof Error ? err.message : "Search failed");
     }
   }, [searchQuery, selectedPath]);
 
   const clearMemorySearch = useCallback(() => {
+    latestSearchLoadRef.current++;
     setSearchQuery("");
     setSearchHits(null);
     setRecordFilters(EMPTY_RECORD_FILTERS);
