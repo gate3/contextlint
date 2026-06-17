@@ -27,8 +27,10 @@ export async function loadSnoozeStore(homedir: string): Promise<SnoozeStore> {
 
 export async function saveSnoozeStore(homedir: string, store: SnoozeStore): Promise<void> {
   const filePath = snoozesPath(homedir);
+  const tempPath = `${filePath}.tmp`;
   await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await fs.writeFile(tempPath, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+  await fs.rename(tempPath, filePath);
 }
 
 export function getProjectPreferences(

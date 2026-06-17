@@ -2,8 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** Absolute path to the bundled Health Scan demo project (repo fixtures). */
-export function resolveScanDemoProjectPath(): string | null {
+let cachedDemoPath: string | null | undefined;
+
+function discoverScanDemoProjectPath(): string | null {
   const envOverride = process.env.MEMINSPECT_SCAN_DEMO_PATH;
   if (envOverride) {
     return path.resolve(envOverride);
@@ -22,4 +23,18 @@ export function resolveScanDemoProjectPath(): string | null {
   }
 
   return null;
+}
+
+/** Absolute path to the bundled Health Scan demo project (repo fixtures). */
+export function resolveScanDemoProjectPath(): string | null {
+  if (cachedDemoPath !== undefined) {
+    return cachedDemoPath;
+  }
+  cachedDemoPath = discoverScanDemoProjectPath();
+  return cachedDemoPath;
+}
+
+/** Reset cached demo path (for tests). */
+export function resetScanDemoProjectPathCache(): void {
+  cachedDemoPath = undefined;
 }

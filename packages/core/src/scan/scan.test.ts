@@ -94,4 +94,23 @@ describe("runScan", () => {
     const result = runScan(ctx);
     expect(result.findings.some((f) => f.ruleId === "stale-dep")).toBe(true);
   });
+
+  it("ignores non-semver package.json versions for stale-dep", async () => {
+    const ctx = await buildScanContext("/tmp/demo", [
+      record({
+        id: "claude-md::CLAUDE.md",
+        source: "claude-md",
+        title: "CLAUDE.md",
+        tool: "claude-code",
+        content: "Use @meminspect/core 1.2.3 in examples",
+      }),
+    ]);
+    ctx.packageJson = {
+      dependencies: { "@meminspect/core": "workspace:*" },
+      devDependencies: {},
+    };
+
+    const result = runScan(ctx);
+    expect(result.findings.some((f) => f.ruleId === "stale-dep")).toBe(false);
+  });
 });

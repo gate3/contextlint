@@ -11,7 +11,7 @@ export const overBroadRule: ScanRule = {
       if (record.source !== "cursor-rules") {
         continue;
       }
-      const { alwaysApply, globs } = record.metadata;
+      const { alwaysApply, globs } = record.metadata ?? {};
       if (!alwaysApply) {
         continue;
       }

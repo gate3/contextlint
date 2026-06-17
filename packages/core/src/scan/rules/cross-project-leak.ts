@@ -1,6 +1,7 @@
 import { withFindingId } from "../finding-id.js";
 import {
   extractReferencedPaths,
+  isGenericSystemPath,
   isMentionedPathInProject,
 } from "../path-utils.js";
 import type { ScanContext, ScanRule } from "../types.js";
@@ -20,6 +21,9 @@ export const crossProjectLeakRule: ScanRule = {
 
       for (const absPath of extractReferencedPaths(record.content)) {
         if (isMentionedPathInProject(ctx.projectPath, absPath)) {
+          continue;
+        }
+        if (isGenericSystemPath(absPath)) {
           continue;
         }
         leaks.push(absPath);

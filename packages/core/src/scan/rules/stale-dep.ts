@@ -35,7 +35,7 @@ export const staleDepRule: ScanRule = {
           continue;
         }
         const pkgVersion = actual.get(depName);
-        if (!pkgVersion) {
+        if (!pkgVersion || !/^\d/.test(pkgVersion)) {
           continue;
         }
         const pkgMajorMinor = pkgVersion.split(".").slice(0, 2).join(".");

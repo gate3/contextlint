@@ -29,7 +29,7 @@ export const tokenBudgetRule: ScanRule = {
       recordIds.push(record.id);
     }
 
-    const tokens = estimateTokens(" ".repeat(totalChars));
+    const tokens = estimateTokens(totalChars);
     const threshold = DEFAULT_THRESHOLD;
 
     if (tokens <= threshold) {

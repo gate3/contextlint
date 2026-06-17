@@ -20,6 +20,16 @@ export function sanitizeExtractedPath(p: string): string {
   return p.replace(/[.,;:!?)'"\]]+$/g, "");
 }
 
+const GENERIC_SYSTEM_PREFIXES = ["/tmp", "/var", "/opt", "/private", "/etc", "/usr"] as const;
+
+/** True for common OS paths that are not user project directories. */
+export function isGenericSystemPath(mentioned: string): boolean {
+  const normalized = normalizePath(mentioned);
+  return GENERIC_SYSTEM_PREFIXES.some(
+    (prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`),
+  );
+}
+
 /** True when `mentioned` is the project, inside it, or a parent directory of it. */
 export function isProjectPathReference(projectPath: string, mentioned: string): boolean {
   const project = normalizePath(projectPath);

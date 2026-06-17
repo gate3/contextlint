@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractReferencedPaths,
+  isGenericSystemPath,
   isMentionedPathInProject,
   isProjectPathReference,
   normalizePath,
@@ -53,6 +54,19 @@ describe("extractReferencedPaths", () => {
   it("strips trailing period from prose paths", () => {
     const paths = extractReferencedPaths(`Repo lives at ${MEMINSPECT}.`);
     expect(paths).toEqual([MEMINSPECT]);
+  });
+});
+
+describe("isGenericSystemPath", () => {
+  it("ignores common OS directories", () => {
+    expect(isGenericSystemPath("/tmp/build")).toBe(true);
+    expect(isGenericSystemPath("/var/log")).toBe(true);
+    expect(isGenericSystemPath("/usr/local/bin")).toBe(true);
+  });
+
+  it("does not treat user project paths as system paths", () => {
+    expect(isGenericSystemPath(MEMINSPECT)).toBe(false);
+    expect(isGenericSystemPath("/Users/dimopc/other-app")).toBe(false);
   });
 });
 
@@ -116,6 +130,15 @@ describe("crossProjectLeakRule", () => {
     expect(findings).toHaveLength(1);
     expect(findings[0]?.detail).toContain("other-app");
     expect(findings[0]?.detail).not.toContain("meminspect");
+  });
+
+  it("does not flag generic system paths", () => {
+    const findings = crossProjectLeakRule.run({
+      projectPath: MEMINSPECT,
+      projectName: "meminspect",
+      records: [record("Logs are in /var/log/app.log and /tmp/cache")],
+    });
+    expect(findings).toHaveLength(0);
   });
 
   it("skips cursor sqlite kv records", () => {

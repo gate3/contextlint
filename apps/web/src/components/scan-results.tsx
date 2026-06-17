@@ -131,7 +131,7 @@ function FindingCard({
   onSelect: () => void;
   onSnooze: () => void;
 }) {
-  const config = SEVERITY_CONFIG[finding.severity];
+  const config = SEVERITY_CONFIG[finding.severity] ?? SEVERITY_CONFIG.info;
   const Icon = config.icon;
 
   return (
