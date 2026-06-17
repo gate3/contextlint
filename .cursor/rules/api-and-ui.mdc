@@ -8,14 +8,45 @@ alwaysApply: false
 
 ## Server (`apps/server`)
 
-- Hono routes stay thin — call `core` or adapters
-- Validate request bodies with Zod
+- Keep route handlers thin — validate input, call `services/` or `core`, return JSON
+- Split routes by domain under `src/routes/` (e.g. `projects.ts`, `scan.ts`); wire in `routes/index.ts`
+- Shared adapter helpers live in `src/adapters.ts`; data loading in `src/services/`
+- Validate request bodies with Zod when non-trivial
 - Return JSON errors: `{ error: string, code: string }`
 - CORS: allow only `localhost` origins in dev
+- Avoid monolithic `app.ts` — target ~50 lines for composition only
 
 ## Web (`apps/web`)
 
-- Fetch via typed client generated from route shapes or shared types in `core`
+### Services layer (required)
+
+- **No `fetch` in components or hooks that render UI** — all HTTP lives in `src/services/`
+- Services call `http-client.ts` (`getJson` / `postJson`); one service file per domain (`projects-service`, `records-service`, `scan-service`)
+- Components and containers import from `@/services`, never `@/api`
+
+### Container vs presentational (required)
+
+- **Container** (`*-container.tsx` or `use-*.ts` hook): state, side effects, service calls, derived data
+- **Presentational** (`*-view.tsx`, panel components): props in, JSX out; no service imports
+- Split when a file exceeds ~200 lines or mixes data loading with layout
+- Extract a sub-component only when it is a coherent UI section (header, sidebar panel, detail view) — not one-off wrappers
+
+### File layout example
+
+```
+src/
+  services/           # HTTP + API shapes
+  hooks/              # container logic (useMemoryBrowser)
+  components/
+    memory-browser/
+      memory-browser-container.tsx
+      memory-browser-view.tsx
+      projects-panel.tsx
+      records-panel.tsx
+```
+
+### UI behaviour
+
 - Show severity badges for scan findings: error / warning / info
 - Editor: warn before save if record is `writable: false`
 - Never store memory content in `localStorage`

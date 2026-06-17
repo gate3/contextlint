@@ -19,7 +19,12 @@ Browser UI  →  API server  →  Tool adapters  →  Local files / SQLite
 meminspect/
 ├── apps/
 │   ├── server/          # Hono API + CLI
+│   │   ├── src/routes/  # Thin route handlers by domain
+│   │   └── src/services/ # Record loading, scan preferences
 │   └── web/             # Vite + React UI
+│       ├── src/services/  # HTTP client + API calls (no fetch in components)
+│       ├── src/hooks/       # Container logic (state, side effects)
+│       └── src/components/  # Presentational UI; feature folders (e.g. memory-browser/)
 ├── packages/
 │   ├── core/            # Types, scan engine, preview, WriteGuard
 │   ├── adapter-cursor/
