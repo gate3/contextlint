@@ -87,4 +87,59 @@ describe("API", () => {
     expect(body.bundles.find((b) => b.tool === "cursor")?.records).toEqual([]);
     expect(body.bundles.find((b) => b.tool === "claude-code")?.records).toHaveLength(1);
   });
+
+  it("POST /projects/scan returns findings", async () => {
+    const app = createApp({
+      homedir: "/tmp/meminspect-test-home",
+      adapters: [
+        {
+          id: "cursor",
+          detect: async () => ({ tool: "cursor", found: true, paths: [] }),
+          listProjects: async () => [],
+          probeProject: async () => false,
+          listSources: async () => [],
+          listRecords: async () => [
+            {
+              id: "cursor-rules::wide.mdc",
+              source: "cursor-rules",
+              path: "/tmp/demo/.cursor/rules/wide.mdc",
+              kind: "markdown",
+              title: "wide.mdc",
+              content: "Always do X",
+              metadata: {
+                scope: "project",
+                tool: "cursor",
+                writable: true,
+                alwaysApply: true,
+              },
+            },
+          ],
+          readRecord: async () => {
+            throw new Error("not used");
+          },
+          search: async () => [],
+        },
+      ],
+    });
+
+    const res = await app.request("/projects/scan?path=/tmp/demo", { method: "POST" });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      findings: Array<{ ruleId: string }>;
+      stats: { rulesRun: number };
+    };
+    expect(body.stats.rulesRun).toBeGreaterThan(0);
+    expect(body.findings.some((f) => f.ruleId === "over-broad")).toBe(true);
+  });
+
+  it("GET /demo/scan-project returns fixture path when present", async () => {
+    const app = createApp({ adapters: [] });
+    const res = await app.request("/demo/scan-project");
+    if (res.status === 404) {
+      return;
+    }
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { path: string };
+    expect(body.path).toContain("health-scan-demo");
+  });
 });

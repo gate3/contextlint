@@ -32,6 +32,17 @@ curl "http://127.0.0.1:3847/projects/sources?path=$(pwd)"
 curl "http://127.0.0.1:3847/tools"
 ```
 
+### Try Health Scan (demo project)
+
+In the UI, click **Try demo** in the header, then **Health Scan**. The demo under `fixtures/health-scan-demo/` triggers all seven rules (contradiction, cross-project leak, stale deps, redundant rules, over-broad rule, shadow memory, token budget).
+
+Or from the API:
+
+```bash
+DEMO=$(curl -s http://127.0.0.1:3847/demo/scan-project | jq -r .path)
+curl -X POST "http://127.0.0.1:3847/projects/scan?path=$DEMO"
+```
+
 ## Supported tools (v1)
 
 - Cursor

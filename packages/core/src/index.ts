@@ -15,3 +15,27 @@ export type {
 export type { MeminspectConfig, MeminspectConfigProject } from "./config.js";
 export { loadMeminspectConfig, meminspectConfigPath } from "./config.js";
 export { discoverProjects } from "./discovery.js";
+export type {
+  PackageJsonDeps,
+  ScanContext,
+  ScanFinding,
+  ScanFixHint,
+  ScanOptions,
+  ScanResult,
+  ScanRule,
+  ScanSeverity,
+  ScanStats,
+  ScannedRecord,
+} from "./scan/types.js";
+export { SCAN_RULES } from "./scan/rules/index.js";
+export { buildScanContext, runScan, scanProject } from "./scan/engine.js";
+export { estimateTokens } from "./scan/tokens.js";
+export { stableFindingId } from "./scan/finding-id.js";
+export type { ProjectScanPreferences, SnoozeStore } from "./snoozes.js";
+export {
+  getProjectPreferences,
+  loadSnoozeStore,
+  saveSnoozeStore,
+  setProjectPreferences,
+  snoozesPath,
+} from "./snoozes.js";

@@ -14,6 +14,7 @@ Read `docs/ARCHITECTURE.md` before large changes.
 ## Code principles
 
 - **Minimize scope** — smallest correct change; no premature abstractions
+- **Modular files** — split large modules by domain; prefer imports over 300+ line files. Not micro-components: extract only cohesive units (route group, panel, service).
 - **Adapter isolation** — tool-specific paths and parsing live only in `packages/adapter-*`
 - **Safety first** — all writes go through `WriteGuard`; backup before mutate
 - **Heuristics over LLM** — v1 scan rules are deterministic; label uncertain findings clearly
@@ -23,8 +24,8 @@ Read `docs/ARCHITECTURE.md` before large changes.
 
 - `packages/core` — no imports from adapters or apps
 - `packages/adapter-*` — depend on `core` only
-- `apps/server` — wires adapters; exposes API
-- `apps/web` — UI only; no direct filesystem access
+- `apps/server` — wires adapters; exposes API; routes in `src/routes/`, logic in `src/services/`
+- `apps/web` — UI only; no direct filesystem access; HTTP via `src/services/`; container/presentational split
 
 ## OSS hygiene
 

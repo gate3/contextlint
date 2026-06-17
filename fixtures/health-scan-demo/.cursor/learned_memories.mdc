@@ -1,0 +1,6 @@
+---
+description: Agent-learned memories (demo)
+---
+
+The team prefers Vitest over Jest for unit tests. API routes live under apps/server.
+When editing scan rules, add fixtures under packages/core/src/scan/fixtures.

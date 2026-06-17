@@ -19,7 +19,12 @@ Browser UI  →  API server  →  Tool adapters  →  Local files / SQLite
 meminspect/
 ├── apps/
 │   ├── server/          # Hono API + CLI
+│   │   ├── src/routes/  # Thin route handlers by domain
+│   │   └── src/services/ # Record loading, scan preferences
 │   └── web/             # Vite + React UI
+│       ├── src/services/  # HTTP client + API calls (no fetch in components)
+│       ├── src/hooks/       # Container logic (state, side effects)
+│       └── src/components/  # Presentational UI; feature folders (e.g. memory-browser/)
 ├── packages/
 │   ├── core/            # Types, scan engine, preview, WriteGuard
 │   ├── adapter-cursor/
@@ -62,6 +67,10 @@ Assembles memory layers in the order each IDE loads them and estimates token cos
 | GET | `/projects/records?path=` | List all memory records (`tool` optional) |
 | GET | `/records?path=&id=` | Read a single record |
 | GET | `/search?path=&q=` | Search memory content (`tool` optional) |
+| POST | `/projects/scan?path=` | Run health scan (`tool` optional) |
+| GET | `/projects/scan/preferences?path=` | Snooze / disabled-rule preferences |
+| POST | `/projects/scan/snooze` | Snooze a finding (`{ path, findingId }`) |
+| POST | `/projects/scan/disable-rule` | Disable or enable a rule (`{ path, ruleId, enabled? }`) |
 
 Server binds to `127.0.0.1:3847` by default. User overrides live in `~/.meminspect/config.json`.
 
