@@ -1,9 +1,9 @@
-import { isProjectPathReference } from "../path-utils.js";
 import { withFindingId } from "../finding-id.js";
+import {
+  extractReferencedPaths,
+  isMentionedPathInProject,
+} from "../path-utils.js";
 import type { ScanContext, ScanRule } from "../types.js";
-
-const ABS_PATH_RE = /(?:^|[\s"'`(])(\/(?:Users|home|tmp|var|opt)[^\s"'`,)]{2,})/gim;
-const OTHER_REPO_RE = /(?:^|[\s"'`(])([A-Za-z]:\\[^\s"'`,)]+)/g;
 
 export const crossProjectLeakRule: ScanRule = {
   id: "cross-project-leak",
@@ -12,29 +12,17 @@ export const crossProjectLeakRule: ScanRule = {
     const findings = [];
 
     for (const record of ctx.records) {
-      // SQLite KV is Cursor internal state — paths here are not user-authored memory.
       if (record.source === "cursor-sqlite-kv" || !record.content.trim()) {
         continue;
       }
 
       const leaks: string[] = [];
 
-      for (const match of record.content.matchAll(ABS_PATH_RE)) {
-        const absPath = match[1];
-        if (!absPath || isProjectPathReference(ctx.projectPath, absPath)) {
+      for (const absPath of extractReferencedPaths(record.content)) {
+        if (isMentionedPathInProject(ctx.projectPath, absPath)) {
           continue;
         }
         leaks.push(absPath);
-      }
-
-      for (const match of record.content.matchAll(OTHER_REPO_RE)) {
-        const winPath = match[1];
-        if (!winPath || isProjectPathReference(ctx.projectPath, winPath)) {
-          continue;
-        }
-        if (!winPath.toLowerCase().includes(ctx.projectName.toLowerCase())) {
-          leaks.push(winPath);
-        }
       }
 
       const unique = [...new Set(leaks)].slice(0, 3);

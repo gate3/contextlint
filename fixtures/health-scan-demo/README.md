@@ -1,16 +1,15 @@
 # Health Scan demo project
 
-Intentionally broken memory for testing Meminspect.
+Intentional memory issues for testing all seven Health Scan rules.
 
 **In the UI:** click **Try demo** in the header, then **Health Scan**.
 
-Expected findings (heuristic — counts may vary):
-
-| Severity | Rule | Trigger |
-|----------|------|---------|
-| Error | `contradiction` | `use-pnpm.mdc` vs `use-npm.mdc` |
-| Warning | `over-broad` | `over-broad.mdc` has `alwaysApply` with no globs |
-| Warning | `stale-dep` | CLAUDE.md mentions react 16, package.json has react 18 |
-| Warning | `cross-project-leak` | CLAUDE.md references `/Users/other-dev/...` |
-| Info | `redundant` | `style-guide.mdc` vs `style-guide-copy.mdc` |
-| Info | `shadow-memory` | Non-trivial `learned_memories.mdc` |
+| Rule | Trigger in this fixture |
+|------|-------------------------|
+| `contradiction` | `use-pnpm.mdc` vs `use-npm.mdc` |
+| `cross-project-leak` | External path in `CLAUDE.md` |
+| `stale-dep` | react 16.0.0 in `CLAUDE.md` vs `package.json` |
+| `redundant` | `style-guide.mdc` vs `style-guide-copy.mdc` |
+| `over-broad` | `over-broad.mdc` (`alwaysApply` with no globs) |
+| `shadow-memory` | `.cursor/learned_memories.mdc` |
+| `token-budget` | Large `token-budget-pad.mdc` pushes session load over threshold |
