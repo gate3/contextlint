@@ -12,7 +12,7 @@ import {
   Info,
   Layers,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { PreviewResponse } from "@/services/preview-service";
 
 const SEVERITY_CONFIG = {
@@ -50,26 +50,13 @@ export function SessionPreviewPanel({
 }: SessionPreviewPanelProps) {
   const grandTotal = preview?.grandTotalTokens ?? 0;
   const conflictCount = preview?.conflictCount ?? 0;
-  const layerKeys = useMemo(
-    () =>
-      preview?.tools.flatMap((tool) =>
-        tool.layers.map((layer) => `${tool.tool}::${layer.id}`),
-      ) ?? [],
-    [preview],
-  );
-  const [expandedLayers, setExpandedLayers] = useState<Set<string>>(() => new Set());
+  const [collapsedLayers, setCollapsedLayers] = useState<Set<string>>(() => new Set());
 
-  const effectiveExpanded = useMemo(() => {
-    if (expandedLayers.size > 0) {
-      return expandedLayers;
-    }
-    return new Set(layerKeys);
-  }, [expandedLayers, layerKeys]);
+  const isLayerExpanded = (key: string) => !collapsedLayers.has(key);
 
   const toggleLayer = (key: string) => {
-    setExpandedLayers((prev) => {
-      const base = prev.size > 0 ? prev : new Set(layerKeys);
-      const next = new Set(base);
+    setCollapsedLayers((prev) => {
+      const next = new Set(prev);
       if (next.has(key)) {
         next.delete(key);
       } else {
@@ -134,7 +121,7 @@ export function SessionPreviewPanel({
                 <ToolPreviewCard
                   key={toolPreview.tool}
                   preview={toolPreview}
-                  expandedLayers={effectiveExpanded}
+                  isLayerExpanded={isLayerExpanded}
                   onToggleLayer={toggleLayer}
                   onSelectRecord={onSelectRecord}
                 />
@@ -165,12 +152,12 @@ export function SessionPreviewPanel({
 
 function ToolPreviewCard({
   preview,
-  expandedLayers,
+  isLayerExpanded,
   onToggleLayer,
   onSelectRecord,
 }: {
   preview: ToolSessionPreview;
-  expandedLayers: Set<string>;
+  isLayerExpanded: (key: string) => boolean;
   onToggleLayer: (key: string) => void;
   onSelectRecord: (recordId: string) => void;
 }) {
@@ -195,7 +182,7 @@ function ToolPreviewCard({
               key={layer.id}
               layer={layer}
               toolTotal={preview.totalTokens}
-              expanded={expandedLayers.has(layerKey)}
+              expanded={isLayerExpanded(layerKey)}
               onToggle={() => onToggleLayer(layerKey)}
               onSelectRecord={onSelectRecord}
             />
