@@ -53,6 +53,7 @@ export interface MemoryBrowserViewProps {
   onClearMemorySearch: () => void;
   onSelectRecord: (record: FlatRecord) => void;
   onSelectFinding: (finding: ScanFinding, from?: "scan" | "preview") => void;
+  onSelectPreviewRecord: (recordId: string) => void;
   onSnoozeFinding: (finding: ScanFinding) => void;
   onCloseScanPanel: () => void;
   onBackToScanResults: () => void;

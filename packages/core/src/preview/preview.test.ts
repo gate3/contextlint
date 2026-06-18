@@ -107,6 +107,44 @@ describe("buildSessionPreview", () => {
     expect(preview.conflictFindings[0]?.id).toBe(sessionFinding.id);
   });
 
+  it("includes per-file breakdown with rule metadata", () => {
+    const preview = buildSessionPreview(PROJECT, [
+      record({
+        id: "cursor-rules::wide.mdc",
+        source: "cursor-rules",
+        tool: "cursor",
+        content: "x".repeat(100),
+        title: "wide.mdc",
+        metadata: {
+          scope: "project",
+          tool: "cursor",
+          writable: true,
+          alwaysApply: true,
+        },
+      }),
+      record({
+        id: "cursor-rules::scoped.mdc",
+        source: "cursor-rules",
+        tool: "cursor",
+        content: "y".repeat(40),
+        title: "scoped.mdc",
+        metadata: {
+          scope: "project",
+          tool: "cursor",
+          writable: true,
+          alwaysApply: false,
+          globs: ["**/*.ts"],
+        },
+      }),
+    ]);
+
+    const rules = preview.tools[0]?.layers.find((layer) => layer.id === "cursor-rules");
+    expect(rules?.records).toHaveLength(2);
+    expect(rules?.records[0]?.title).toBe("wide.mdc");
+    expect(rules?.records[0]?.alwaysApply).toBe(true);
+    expect(rules?.records[1]?.globs).toEqual(["**/*.ts"]);
+  });
+
   it("omits empty layers and tools with no session memory", () => {
     const preview = buildSessionPreview(PROJECT, [
       record({

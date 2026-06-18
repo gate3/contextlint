@@ -41,6 +41,7 @@ export {
 } from "./snoozes.js";
 export type {
   PreviewLayer,
+  PreviewLayerRecord,
   SessionPreview,
   SessionPreviewOptions,
   ToolSessionPreview,

@@ -81,7 +81,7 @@ export function RecordDetailPanel({
             onClick={onBackToPreview}
           >
             <ArrowLeft className="size-4" />
-            Back to session preview
+            Back to session load
           </Button>
         ) : null}
         <div className="flex items-start gap-3">

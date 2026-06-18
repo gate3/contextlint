@@ -1,7 +1,7 @@
 import { estimateTokens } from "../scan/tokens.js";
 import type { ScannedRecord } from "../scan/types.js";
 import { PREVIEW_LAYER_SPECS, SESSION_LOAD_SOURCES } from "./layers.js";
-import type { PreviewLayer, SessionPreview, SessionPreviewOptions, ToolSessionPreview } from "./types.js";
+import type { PreviewLayer, PreviewLayerRecord, SessionPreview, SessionPreviewOptions, ToolSessionPreview } from "./types.js";
 import type { ToolId } from "../types.js";
 
 const TOOL_ORDER: ToolId[] = ["cursor", "claude-code"];
@@ -12,23 +12,47 @@ function sessionLoadRecords(records: ScannedRecord[]): ScannedRecord[] {
   );
 }
 
+function buildLayerRecord(record: ScannedRecord): PreviewLayerRecord {
+  const entry: PreviewLayerRecord = {
+    recordId: record.id,
+    title: record.title,
+    chars: record.content.length,
+    tokens: estimateTokens(record.content.length),
+  };
+
+  if (record.source === "cursor-rules") {
+    const { alwaysApply, globs } = record.metadata ?? {};
+    if (alwaysApply !== undefined) {
+      entry.alwaysApply = alwaysApply;
+    }
+    if (globs?.length) {
+      entry.globs = globs;
+    }
+  }
+
+  return entry;
+}
+
 function buildLayer(
   spec: (typeof PREVIEW_LAYER_SPECS)[number],
   records: ScannedRecord[],
 ): PreviewLayer | null {
-  const layerRecords = records.filter(
-    (record) => record.tool === spec.tool && spec.sources.includes(record.source),
-  );
+  const layerRecords = records
+    .filter((record) => record.tool === spec.tool && spec.sources.includes(record.source))
+    .sort((a, b) => b.content.length - a.content.length || a.title.localeCompare(b.title));
+
   if (layerRecords.length === 0) {
     return null;
   }
 
+  const layerRecordEntries = layerRecords.map(buildLayerRecord);
   const chars = layerRecords.reduce((sum, record) => sum + record.content.length, 0);
   return {
     id: spec.id,
     label: spec.label,
     sources: spec.sources,
     recordIds: layerRecords.map((record) => record.id),
+    records: layerRecordEntries,
     recordCount: layerRecords.length,
     chars,
     tokens: estimateTokens(chars),

@@ -1,4 +1,4 @@
-import type { PreviewLayer, ScanFinding, ToolSessionPreview } from "@meminspect/core";
+import type { PreviewLayer, PreviewLayerRecord, ScanFinding, ToolSessionPreview } from "@meminspect/core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -7,10 +7,12 @@ import { toolIcon, toolLabel } from "@/lib/icons";
 import {
   AlertCircle,
   AlertTriangle,
+  ChevronDown,
   ChevronRight,
   Info,
   Layers,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 import type { PreviewResponse } from "@/services/preview-service";
 
 const SEVERITY_CONFIG = {
@@ -34,6 +36,7 @@ const SEVERITY_CONFIG = {
 interface SessionPreviewPanelProps {
   preview: PreviewResponse | null;
   loading?: boolean;
+  onSelectRecord: (recordId: string) => void;
   onSelectFinding: (finding: ScanFinding) => void;
   onClose: () => void;
 }
@@ -41,11 +44,40 @@ interface SessionPreviewPanelProps {
 export function SessionPreviewPanel({
   preview,
   loading,
+  onSelectRecord,
   onSelectFinding,
   onClose,
 }: SessionPreviewPanelProps) {
   const grandTotal = preview?.grandTotalTokens ?? 0;
   const conflictCount = preview?.conflictCount ?? 0;
+  const layerKeys = useMemo(
+    () =>
+      preview?.tools.flatMap((tool) =>
+        tool.layers.map((layer) => `${tool.tool}::${layer.id}`),
+      ) ?? [],
+    [preview],
+  );
+  const [expandedLayers, setExpandedLayers] = useState<Set<string>>(() => new Set());
+
+  const effectiveExpanded = useMemo(() => {
+    if (expandedLayers.size > 0) {
+      return expandedLayers;
+    }
+    return new Set(layerKeys);
+  }, [expandedLayers, layerKeys]);
+
+  const toggleLayer = (key: string) => {
+    setExpandedLayers((prev) => {
+      const base = prev.size > 0 ? prev : new Set(layerKeys);
+      const next = new Set(base);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -56,10 +88,10 @@ export function SessionPreviewPanel({
               <Layers className="size-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold tracking-tight">Session Load Preview</h2>
+              <h2 className="text-lg font-semibold tracking-tight">Session Load</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                ~{grandTotal.toLocaleString()} tokens across session-load memory ·{" "}
-                {preview ? new Date(preview.previewedAt).toLocaleString() : "—"}
+                On-disk memory that contributes to session context · ~{grandTotal.toLocaleString()}{" "}
+                tokens · {preview ? new Date(preview.previewedAt).toLocaleString() : "—"}
               </p>
             </div>
           </div>
@@ -69,13 +101,16 @@ export function SessionPreviewPanel({
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <Badge variant="secondary">
-            {preview?.sessionRecordIds.length ?? 0} session-load records
+            {preview?.sessionRecordIds.length ?? 0} file
+            {(preview?.sessionRecordIds.length ?? 0) === 1 ? "" : "s"}
           </Badge>
           {conflictCount > 0 ? (
-            <Badge variant="outline">{conflictCount} scan conflict{conflictCount === 1 ? "" : "s"}</Badge>
+            <Badge variant="outline">
+              {conflictCount} scan conflict{conflictCount === 1 ? "" : "s"}
+            </Badge>
           ) : (
             <Badge variant="outline" className="text-muted-foreground">
-              No scan conflicts in session load
+              No scan conflicts
             </Badge>
           )}
         </div>
@@ -84,24 +119,30 @@ export function SessionPreviewPanel({
       <ScrollArea className="min-h-0 flex-1">
         <div className="space-y-4 p-4">
           {loading ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Building preview…</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Loading session files…</p>
           ) : !preview || preview.tools.length === 0 ? (
             <div className="py-12 text-center">
               <Layers className="mx-auto size-10 text-muted-foreground/60" />
-              <p className="mt-3 text-sm font-medium">No session-load memory found</p>
+              <p className="mt-3 text-sm font-medium">No session-load files found</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Rules, CLAUDE.md, and auto memory appear here when present.
+                Project rules, learned memory, and CLAUDE.md appear here when present.
               </p>
             </div>
           ) : (
             <>
               {preview.tools.map((toolPreview) => (
-                <ToolPreviewCard key={toolPreview.tool} preview={toolPreview} />
+                <ToolPreviewCard
+                  key={toolPreview.tool}
+                  preview={toolPreview}
+                  expandedLayers={effectiveExpanded}
+                  onToggleLayer={toggleLayer}
+                  onSelectRecord={onSelectRecord}
+                />
               ))}
               {preview.conflictFindings.length > 0 ? (
                 <section>
                   <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Conflicts in session load
+                    Scan conflicts
                   </h3>
                   <div className="space-y-2">
                     {preview.conflictFindings.map((finding) => (
@@ -122,7 +163,17 @@ export function SessionPreviewPanel({
   );
 }
 
-function ToolPreviewCard({ preview }: { preview: ToolSessionPreview }) {
+function ToolPreviewCard({
+  preview,
+  expandedLayers,
+  onToggleLayer,
+  onSelectRecord,
+}: {
+  preview: ToolSessionPreview;
+  expandedLayers: Set<string>;
+  onToggleLayer: (key: string) => void;
+  onSelectRecord: (recordId: string) => void;
+}) {
   const Icon = toolIcon(preview.tool);
 
   return (
@@ -137,33 +188,121 @@ function ToolPreviewCard({ preview }: { preview: ToolSessionPreview }) {
         </Badge>
       </div>
       <div className="mt-3 space-y-2">
-        {preview.layers.map((layer) => (
-          <LayerRow key={layer.id} layer={layer} toolTotal={preview.totalTokens} />
-        ))}
+        {preview.layers.map((layer) => {
+          const layerKey = `${preview.tool}::${layer.id}`;
+          return (
+            <LayerSection
+              key={layer.id}
+              layer={layer}
+              toolTotal={preview.totalTokens}
+              expanded={expandedLayers.has(layerKey)}
+              onToggle={() => onToggleLayer(layerKey)}
+              onSelectRecord={onSelectRecord}
+            />
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function LayerRow({ layer, toolTotal }: { layer: PreviewLayer; toolTotal: number }) {
+function LayerSection({
+  layer,
+  toolTotal,
+  expanded,
+  onToggle,
+  onSelectRecord,
+}: {
+  layer: PreviewLayer;
+  toolTotal: number;
+  expanded: boolean;
+  onToggle: () => void;
+  onSelectRecord: (recordId: string) => void;
+}) {
   const share = toolTotal > 0 ? Math.round((layer.tokens / toolTotal) * 100) : 0;
+  const isRules = layer.id === "cursor-rules";
 
   return (
-    <div className="rounded-md border border-border/40 bg-background/60 px-3 py-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm">{layer.label}</span>
+    <div className="rounded-md border border-border/40 bg-background/60">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+      >
+        <span className="flex min-w-0 items-center gap-1.5">
+          {expanded ? (
+            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+          )}
+          <span className="text-sm font-medium">{layer.label}</span>
+        </span>
         <span className="shrink-0 font-mono text-xs text-muted-foreground">
           ~{layer.tokens.toLocaleString()} tok · {layer.recordCount} file
           {layer.recordCount === 1 ? "" : "s"}
         </span>
+      </button>
+      <div className="px-3 pb-2">
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-primary/70 transition-all"
+            style={{ width: `${Math.max(share, 4)}%` }}
+          />
+        </div>
       </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-primary/70 transition-all"
-          style={{ width: `${Math.max(share, 4)}%` }}
-        />
-      </div>
+      {expanded ? (
+        <div className="space-y-1 border-t border-border/40 px-2 py-2">
+          {layer.records.map((entry) => (
+            <LayerRecordRow
+              key={entry.recordId}
+              entry={entry}
+              showRuleMeta={isRules}
+              onSelect={() => onSelectRecord(entry.recordId)}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function LayerRecordRow({
+  entry,
+  showRuleMeta,
+  onSelect,
+}: {
+  entry: PreviewLayerRecord;
+  showRuleMeta: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted/60",
+      )}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="truncate text-sm">{entry.title}</span>
+          {showRuleMeta && entry.alwaysApply !== undefined ? (
+            <Badge variant={entry.alwaysApply ? "default" : "outline"} className="text-[10px]">
+              {entry.alwaysApply ? "always" : "scoped"}
+            </Badge>
+          ) : null}
+        </div>
+        {showRuleMeta && entry.globs?.length ? (
+          <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
+            {entry.globs.join(", ")}
+          </p>
+        ) : null}
+      </div>
+      <span className="shrink-0 pt-0.5 font-mono text-[11px] text-muted-foreground">
+        ~{entry.tokens.toLocaleString()}
+      </span>
+      <ChevronRight className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+    </button>
   );
 }
 

@@ -240,6 +240,20 @@ export function useMemoryBrowser() {
     [selectedPath, scanResult],
   );
 
+  const handleSelectPreviewRecord = useCallback(
+    (recordId: string) => {
+      const record = records.find((r) => r.id === recordId);
+      if (!record) {
+        return;
+      }
+      setReturnToPreviewPanel(true);
+      setReturnToScanPanel(false);
+      setShowPreviewPanel(false);
+      void openRecord(record);
+    },
+    [records, openRecord],
+  );
+
   const handleSelectFinding = useCallback(
     (finding: ScanFinding, from: "scan" | "preview" = "scan") => {
       const recordId = finding.recordIds[0];
@@ -368,6 +382,7 @@ export function useMemoryBrowser() {
     onSelectRecord: handleSelectRecord,
     onSelectFinding: (finding: ScanFinding, from?: "scan" | "preview") =>
       handleSelectFinding(finding, from),
+    onSelectPreviewRecord: handleSelectPreviewRecord,
     onSnoozeFinding: (finding: ScanFinding) => void handleSnoozeFinding(finding),
     onCloseScanPanel: handleCloseScanPanel,
     onBackToScanResults: handleBackToScanResults,

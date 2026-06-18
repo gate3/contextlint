@@ -52,9 +52,9 @@ Each tool adapter implements discovery, listing sources, reading records, and op
 
 Deterministic rules (no LLM in v1): contradictions, cross-project leakage, stale dependencies vs `package.json`, redundant rules, over-broad rules, token budget estimates.
 
-## Session Load Preview
+## Session Load
 
-`packages/core/src/preview/` assembles memory in IDE load order and estimates token cost per layer (chars ÷ 4). Session-load sources exclude SQLite KV and MCP config. Scan findings whose `recordIds` intersect session-load records are attached as **conflicts**.
+`packages/core/src/preview/` inventories on-disk memory in IDE load order with per-file token estimates (chars ÷ 4). Session-load sources exclude SQLite KV and MCP config. The UI expands each layer to list contributing files (with `alwaysApply` / globs for rules); click a file to open record detail. Scan findings whose `recordIds` intersect session-load records are attached as **conflicts**.
 
 | Layer (Cursor) | Sources |
 |----------------|---------|

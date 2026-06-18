@@ -51,7 +51,7 @@ export function MemoryBrowserHeader({
           onClick={onRunPreview}
         >
           <Layers className="size-4" />
-          {previewing ? "Loading…" : "Session Preview"}
+          {previewing ? "Loading…" : "Session Load"}
         </Button>
         <Button
           variant="default"

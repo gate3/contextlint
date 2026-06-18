@@ -47,6 +47,7 @@ export function MemoryBrowserView({
   onClearMemorySearch,
   onSelectRecord,
   onSelectFinding,
+  onSelectPreviewRecord,
   onSnoozeFinding,
   onCloseScanPanel,
   onBackToScanResults,
@@ -120,6 +121,7 @@ export function MemoryBrowserView({
             <SessionPreviewPanel
               preview={previewResult}
               loading={previewing}
+              onSelectRecord={onSelectPreviewRecord}
               onSelectFinding={(finding) => onSelectFinding(finding, "preview")}
               onClose={onClosePreviewPanel}
             />

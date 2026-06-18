@@ -1,11 +1,21 @@
 import type { MemorySourceKind, ToolId } from "../types.js";
 import type { ScanFinding } from "../scan/types.js";
 
+export interface PreviewLayerRecord {
+  recordId: string;
+  title: string;
+  chars: number;
+  tokens: number;
+  alwaysApply?: boolean;
+  globs?: string[];
+}
+
 export interface PreviewLayer {
   id: string;
   label: string;
   sources: MemorySourceKind[];
   recordIds: string[];
+  records: PreviewLayerRecord[];
   recordCount: number;
   chars: number;
   tokens: number;
