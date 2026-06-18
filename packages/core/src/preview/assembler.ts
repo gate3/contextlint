@@ -102,14 +102,14 @@ export function buildSessionPreview(
     (preview): preview is ToolSessionPreview => preview !== null,
   );
 
-  const grandTotalChars = tools.reduce((sum, tool) => sum + tool.totalChars, 0);
+  const grandTotalTokens = tools.reduce((sum, tool) => sum + tool.totalTokens, 0);
   const conflictFindings = attachConflictFindings(sessionRecordIdSet, options.scanFindings);
 
   return {
     projectPath,
     previewedAt: new Date().toISOString(),
     tools,
-    grandTotalTokens: estimateTokens(grandTotalChars),
+    grandTotalTokens,
     sessionRecordIds,
     conflictFindings,
     conflictCount: conflictFindings.length,

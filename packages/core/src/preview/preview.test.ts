@@ -145,6 +145,29 @@ describe("buildSessionPreview", () => {
     expect(rules?.records[1]?.globs).toEqual(["**/*.ts"]);
   });
 
+  it("grand total matches sum of tool token estimates", () => {
+    const preview = buildSessionPreview(PROJECT, [
+      record({
+        id: "cursor-rules::a.mdc",
+        source: "cursor-rules",
+        tool: "cursor",
+        content: "a".repeat(5),
+        title: "a.mdc",
+      }),
+      record({
+        id: "claude-md::CLAUDE.md",
+        source: "claude-md",
+        tool: "claude-code",
+        content: "b".repeat(5),
+        title: "CLAUDE.md",
+      }),
+    ]);
+
+    const toolSum = preview.tools.reduce((sum, tool) => sum + tool.totalTokens, 0);
+    expect(preview.grandTotalTokens).toBe(toolSum);
+    expect(preview.grandTotalTokens).toBe(4);
+  });
+
   it("omits empty layers and tools with no session memory", () => {
     const preview = buildSessionPreview(PROJECT, [
       record({
