@@ -256,7 +256,7 @@ export function useMemoryBrowser() {
 
   const handleSelectFinding = useCallback(
     (finding: ScanFinding, from: "scan" | "preview" = "scan") => {
-      const recordId = finding.recordIds[0];
+      const recordId = finding.recordIds?.[0];
       if (!recordId) {
         return;
       }
