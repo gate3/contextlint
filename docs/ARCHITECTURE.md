@@ -52,9 +52,21 @@ Each tool adapter implements discovery, listing sources, reading records, and op
 
 Deterministic rules (no LLM in v1): contradictions, cross-project leakage, stale dependencies vs `package.json`, redundant rules, over-broad rules, token budget estimates.
 
-## Session Load Preview
+## Session Load
 
-Assembles memory layers in the order each IDE loads them and estimates token cost per layer.
+`packages/core/src/preview/` inventories on-disk memory in IDE load order with per-file token estimates (chars ÷ 4). Session-load sources exclude SQLite KV and MCP config. The UI expands each layer to list contributing files (with `alwaysApply` / globs for rules); click a file to open record detail. Scan findings whose `recordIds` intersect session-load records are attached as **conflicts**.
+
+| Layer (Cursor) | Sources |
+|----------------|---------|
+| Project rules | `cursor-rules` |
+| Learned memories | `cursor-learned` |
+
+| Layer (Claude Code) | Sources |
+|---------------------|---------|
+| User CLAUDE.md | `claude-user` |
+| Parent CLAUDE.md | `claude-md-parent` |
+| Project CLAUDE.md | `claude-md`, `claude-md-local` |
+| Auto memory | `claude-auto-memory`, `claude-auto-memory-topic` |
 
 ## API (M1)
 
@@ -71,6 +83,7 @@ Assembles memory layers in the order each IDE loads them and estimates token cos
 | GET | `/projects/scan/preferences?path=` | Snooze / disabled-rule preferences |
 | POST | `/projects/scan/snooze` | Snooze a finding (`{ path, findingId }`) |
 | POST | `/projects/scan/disable-rule` | Disable or enable a rule (`{ path, ruleId, enabled? }`) |
+| GET | `/projects/preview?path=` | Session load preview + attached scan conflicts (`tool` optional) |
 
 Server binds to `127.0.0.1:3847` by default. User overrides live in `~/.meminspect/config.json`.
 

@@ -39,3 +39,12 @@ export {
   setProjectPreferences,
   snoozesPath,
 } from "./snoozes.js";
+export type {
+  PreviewLayer,
+  PreviewLayerRecord,
+  SessionPreview,
+  SessionPreviewOptions,
+  ToolSessionPreview,
+} from "./preview/types.js";
+export { buildSessionPreview } from "./preview/assembler.js";
+export { isSessionLoadSource, SESSION_LOAD_SOURCES } from "./preview/layers.js";

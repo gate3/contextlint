@@ -132,6 +132,71 @@ describe("API", () => {
     expect(body.findings.some((f) => f.ruleId === "over-broad")).toBe(true);
   });
 
+  it("GET /projects/preview returns layered token breakdown", async () => {
+    const app = createApp({
+      homedir: "/tmp/meminspect-test-home",
+      adapters: [
+        {
+          id: "cursor",
+          detect: async () => ({ tool: "cursor", found: true, paths: [] }),
+          listProjects: async () => [],
+          probeProject: async () => false,
+          listSources: async () => [],
+          listRecords: async () => [
+            {
+              id: "cursor-rules::a.mdc",
+              source: "cursor-rules",
+              path: "/tmp/demo/.cursor/rules/a.mdc",
+              kind: "markdown",
+              title: "a.mdc",
+              content: "rule content",
+              metadata: { scope: "project", tool: "cursor", writable: true },
+            },
+          ],
+          readRecord: async () => {
+            throw new Error("not used");
+          },
+          search: async () => [],
+        },
+        {
+          id: "claude-code",
+          detect: async () => ({ tool: "claude-code", found: true, paths: [] }),
+          listProjects: async () => [],
+          probeProject: async () => false,
+          listSources: async () => [],
+          listRecords: async () => [
+            {
+              id: "claude-md::CLAUDE.md",
+              source: "claude-md",
+              path: "/tmp/demo/CLAUDE.md",
+              kind: "markdown",
+              title: "CLAUDE.md",
+              content: "project instructions",
+              metadata: { scope: "project", tool: "claude-code", writable: true },
+            },
+          ],
+          readRecord: async () => {
+            throw new Error("not used");
+          },
+          search: async () => [],
+        },
+      ],
+    });
+
+    const res = await app.request("/projects/preview?path=/tmp/demo");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      tools: Array<{ tool: string; totalTokens: number }>;
+      grandTotalTokens: number;
+      sessionRecordIds: string[];
+      scan: { stats: { rulesRun: number } };
+    };
+    expect(body.tools).toHaveLength(2);
+    expect(body.sessionRecordIds).toHaveLength(2);
+    expect(body.grandTotalTokens).toBeGreaterThan(0);
+    expect(body.scan.stats.rulesRun).toBeGreaterThan(0);
+  });
+
   it("GET /demo/scan-project returns fixture path when present", async () => {
     const app = createApp({ adapters: [] });
     const res = await app.request("/demo/scan-project");

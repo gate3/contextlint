@@ -20,16 +20,20 @@ interface RecordDetailPanelProps {
   record: MemoryRecord | null;
   loading: boolean;
   returnToScanPanel: boolean;
+  returnToPreviewPanel: boolean;
   scanResult: ScanResponse | null;
   onBackToScanResults: () => void;
+  onBackToPreview: () => void;
 }
 
 export function RecordDetailPanel({
   record,
   loading,
   returnToScanPanel,
+  returnToPreviewPanel,
   scanResult,
   onBackToScanResults,
+  onBackToPreview,
 }: RecordDetailPanelProps) {
   if (loading) {
     return (
@@ -68,6 +72,16 @@ export function RecordDetailPanel({
           >
             <ArrowLeft className="size-4" />
             Back to scan results
+          </Button>
+        ) : returnToPreviewPanel ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 mb-3 h-8 gap-1.5 px-2 text-muted-foreground"
+            onClick={onBackToPreview}
+          >
+            <ArrowLeft className="size-4" />
+            Back to session load
           </Button>
         ) : null}
         <div className="flex items-start gap-3">

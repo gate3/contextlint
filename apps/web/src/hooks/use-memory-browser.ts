@@ -13,11 +13,13 @@ import {
 import {
   getScanDemoProject,
   getRecord,
+  getSessionPreview,
   listProjectRecords,
   listProjects,
   runHealthScan,
   searchProjectRecords,
   snoozeFinding,
+  type PreviewResponse,
   type ScanResponse,
 } from "@/services";
 import type { FlatRecord } from "@/components/memory-browser/types";
@@ -48,6 +50,10 @@ export function useMemoryBrowser() {
   const [showScanPanel, setShowScanPanel] = useState(false);
   const [returnToScanPanel, setReturnToScanPanel] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [previewResult, setPreviewResult] = useState<PreviewResponse | null>(null);
+  const [showPreviewPanel, setShowPreviewPanel] = useState(false);
+  const [returnToPreviewPanel, setReturnToPreviewPanel] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
 
   const loadProjects = useCallback(async () => {
     setLoadingProjects(true);
@@ -78,6 +84,9 @@ export function useMemoryBrowser() {
     setScanResult(null);
     setShowScanPanel(false);
     setReturnToScanPanel(false);
+    setPreviewResult(null);
+    setShowPreviewPanel(false);
+    setReturnToPreviewPanel(false);
     try {
       const bundles = await listProjectRecords(projectPath);
       if (loadId !== latestProjectLoadRef.current) {
@@ -160,7 +169,9 @@ export function useMemoryBrowser() {
       const { path: demoPath } = await getScanDemoProject();
       await loadProjectRecords(demoPath);
       setShowScanPanel(false);
+      setShowPreviewPanel(false);
       setScanResult(null);
+      setPreviewResult(null);
     } catch (err) {
       setError(toErrorMessage(err, "Demo project not available"));
     }
@@ -172,6 +183,8 @@ export function useMemoryBrowser() {
     }
     setScanning(true);
     setError(null);
+    setShowPreviewPanel(false);
+    setReturnToPreviewPanel(false);
     setShowScanPanel(true);
     try {
       const result = await runHealthScan(selectedPath);
@@ -181,6 +194,26 @@ export function useMemoryBrowser() {
       setShowScanPanel(false);
     } finally {
       setScanning(false);
+    }
+  }, [selectedPath]);
+
+  const handleRunPreview = useCallback(async () => {
+    if (!selectedPath) {
+      return;
+    }
+    setPreviewing(true);
+    setError(null);
+    setShowScanPanel(false);
+    setReturnToScanPanel(false);
+    setShowPreviewPanel(true);
+    try {
+      const result = await getSessionPreview(selectedPath);
+      setPreviewResult(result);
+    } catch (err) {
+      setError(toErrorMessage(err, "Preview failed"));
+      setShowPreviewPanel(false);
+    } finally {
+      setPreviewing(false);
     }
   }, [selectedPath]);
 
@@ -207,16 +240,37 @@ export function useMemoryBrowser() {
     [selectedPath, scanResult],
   );
 
+  const handleSelectPreviewRecord = useCallback(
+    (recordId: string) => {
+      const record = records.find((r) => r.id === recordId);
+      if (!record) {
+        return;
+      }
+      setReturnToPreviewPanel(true);
+      setReturnToScanPanel(false);
+      setShowPreviewPanel(false);
+      void openRecord(record);
+    },
+    [records, openRecord],
+  );
+
   const handleSelectFinding = useCallback(
-    (finding: ScanFinding) => {
-      const recordId = finding.recordIds[0];
+    (finding: ScanFinding, from: "scan" | "preview" = "scan") => {
+      const recordId = finding.recordIds?.[0];
       if (!recordId) {
         return;
       }
       const record = records.find((r) => r.id === recordId);
       if (record) {
-        setReturnToScanPanel(true);
-        setShowScanPanel(false);
+        if (from === "preview") {
+          setReturnToPreviewPanel(true);
+          setReturnToScanPanel(false);
+          setShowPreviewPanel(false);
+        } else {
+          setReturnToScanPanel(true);
+          setReturnToPreviewPanel(false);
+          setShowScanPanel(false);
+        }
         void openRecord(record);
       }
     },
@@ -226,6 +280,7 @@ export function useMemoryBrowser() {
   const handleSelectRecord = useCallback(
     (record: FlatRecord) => {
       setReturnToScanPanel(false);
+      setReturnToPreviewPanel(false);
       void openRecord(record);
     },
     [openRecord],
@@ -238,9 +293,21 @@ export function useMemoryBrowser() {
     setShowScanPanel(true);
   }, []);
 
+  const handleBackToPreview = useCallback(() => {
+    setReturnToPreviewPanel(false);
+    setSelectedRecord(null);
+    setSelectedRecordId(null);
+    setShowPreviewPanel(true);
+  }, []);
+
   const handleCloseScanPanel = useCallback(() => {
     setShowScanPanel(false);
     setReturnToScanPanel(false);
+  }, []);
+
+  const handleClosePreviewPanel = useCallback(() => {
+    setShowPreviewPanel(false);
+    setReturnToPreviewPanel(false);
   }, []);
 
   const isMemorySearchActive =
@@ -296,6 +363,10 @@ export function useMemoryBrowser() {
     showScanPanel,
     returnToScanPanel,
     scanning,
+    previewResult,
+    showPreviewPanel,
+    returnToPreviewPanel,
+    previewing,
     onProjectSearchChange: setProjectSearch,
     onProjectSortChange: setProjectSort,
     onSelectProject: (path: string) => void loadProjectRecords(path),
@@ -303,14 +374,19 @@ export function useMemoryBrowser() {
     onOpenProjectPath: (path: string) => void loadProjectRecords(path),
     onTryDemo: () => void handleTryDemo(),
     onRunScan: () => void handleRunScan(),
+    onRunPreview: () => void handleRunPreview(),
     onRecordFiltersChange: setRecordFilters,
     onSearchQueryChange: setSearchQuery,
     onRunSearch: () => void runSearch(),
     onClearMemorySearch: clearMemorySearch,
     onSelectRecord: handleSelectRecord,
-    onSelectFinding: handleSelectFinding,
+    onSelectFinding: (finding: ScanFinding, from?: "scan" | "preview") =>
+      handleSelectFinding(finding, from),
+    onSelectPreviewRecord: handleSelectPreviewRecord,
     onSnoozeFinding: (finding: ScanFinding) => void handleSnoozeFinding(finding),
     onCloseScanPanel: handleCloseScanPanel,
     onBackToScanResults: handleBackToScanResults,
+    onClosePreviewPanel: handleClosePreviewPanel,
+    onBackToPreview: handleBackToPreview,
   };
 }

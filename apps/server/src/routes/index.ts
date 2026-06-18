@@ -2,6 +2,7 @@ import type { Hono } from "hono";
 import type { ServerContext } from "./context.js";
 import { registerDemoRoutes } from "./demo.js";
 import { registerHealthRoutes } from "./health.js";
+import { registerPreviewRoutes } from "./preview.js";
 import { registerProjectRoutes } from "./projects.js";
 import { registerRecordRoutes } from "./records.js";
 import { registerScanRoutes } from "./scan.js";
@@ -16,6 +17,7 @@ export function registerRoutes(app: Hono, ctx: ServerContext): void {
   registerRecordRoutes(app, ctx);
   registerSearchRoutes(app, ctx);
   registerScanRoutes(app, ctx);
+  registerPreviewRoutes(app, ctx);
 }
 
 export type { ServerContext } from "./context.js";
