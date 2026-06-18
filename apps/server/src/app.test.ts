@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { createApp } from "./app.js";
 
 describe("API", () => {
@@ -206,5 +209,67 @@ describe("API", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as { path: string };
     expect(body.path).toContain("health-scan-demo");
+  });
+
+  it("PUT /records writes markdown with backup and POST /undo restores", async () => {
+    const homedir = await fs.mkdtemp(path.join(os.tmpdir(), "meminspect-write-"));
+    const projectPath = path.join(homedir, "demo");
+    const rulePath = path.join(projectPath, ".cursor", "rules", "a.mdc");
+    await fs.mkdir(path.dirname(rulePath), { recursive: true });
+    await fs.writeFile(rulePath, "original", "utf8");
+
+    const recordId = `cursor-rules::${rulePath}`;
+    const adapter = {
+      id: "cursor" as const,
+      detect: async () => ({ tool: "cursor" as const, found: true, paths: [] }),
+      listProjects: async () => [],
+      probeProject: async () => true,
+      listSources: async () => [],
+      listRecords: async () => [
+        {
+          id: recordId,
+          source: "cursor-rules" as const,
+          path: rulePath,
+          kind: "markdown" as const,
+          title: "a.mdc",
+          content: await fs.readFile(rulePath, "utf8"),
+          metadata: { scope: "project" as const, tool: "cursor" as const, writable: true },
+        },
+      ],
+      readRecord: async () => ({
+        id: recordId,
+        source: "cursor-rules" as const,
+        path: rulePath,
+        kind: "markdown" as const,
+        title: "a.mdc",
+        content: await fs.readFile(rulePath, "utf8"),
+        metadata: { scope: "project" as const, tool: "cursor" as const, writable: true },
+      }),
+      search: async () => [],
+    };
+
+    const app = createApp({ homedir, adapters: [adapter] });
+    const putRes = await app.request(
+      `/records?path=${encodeURIComponent(projectPath)}&id=${encodeURIComponent(recordId)}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: "updated" }),
+      },
+    );
+    expect(putRes.status).toBe(200);
+    const putBody = (await putRes.json()) as { backupPath: string; record: { content: string } };
+    expect(putBody.record.content).toBe("updated");
+    expect(putBody.backupPath).toContain(".meminspect/backups");
+    await expect(fs.readFile(rulePath, "utf8")).resolves.toBe("updated");
+
+    const undoStatus = await app.request("/undo");
+    expect(undoStatus.status).toBe(200);
+    const undoBody = (await undoStatus.json()) as { available: boolean };
+    expect(undoBody.available).toBe(true);
+
+    const undoRes = await app.request("/undo", { method: "POST" });
+    expect(undoRes.status).toBe(200);
+    await expect(fs.readFile(rulePath, "utf8")).resolves.toBe("original");
   });
 });

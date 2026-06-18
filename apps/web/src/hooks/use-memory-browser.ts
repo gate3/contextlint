@@ -14,11 +14,14 @@ import {
   getScanDemoProject,
   getRecord,
   getSessionPreview,
+  getUndoStatus,
   listProjectRecords,
   listProjects,
   runHealthScan,
   searchProjectRecords,
   snoozeFinding,
+  undoLastWrite,
+  updateRecord,
   type PreviewResponse,
   type ScanResponse,
 } from "@/services";
@@ -54,6 +57,29 @@ export function useMemoryBrowser() {
   const [showPreviewPanel, setShowPreviewPanel] = useState(false);
   const [returnToPreviewPanel, setReturnToPreviewPanel] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [savingRecord, setSavingRecord] = useState(false);
+  const [undoAvailable, setUndoAvailable] = useState(false);
+  const [lastBackupPath, setLastBackupPath] = useState<string | null>(null);
+
+  const refreshUndoStatus = useCallback(async () => {
+    try {
+      const status = await getUndoStatus();
+      setUndoAvailable(status.available);
+    } catch {
+      setUndoAvailable(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshUndoStatus();
+  }, [refreshUndoStatus]);
+
+  const reloadRecordsForProject = useCallback(async (projectPath: string) => {
+    const bundles = await listProjectRecords(projectPath);
+    const flat = bundles.flatMap((b) => b.records.map((record) => ({ ...record, tool: b.tool })));
+    setRecords(flat);
+    return flat;
+  }, []);
 
   const loadProjects = useCallback(async () => {
     setLoadingProjects(true);
@@ -117,6 +143,7 @@ export function useMemoryBrowser() {
       setSelectedRecordId(record.id);
       setLoadingRecord(true);
       setError(null);
+      setLastBackupPath(null);
       try {
         const full = await getRecord(selectedPath, record.id, record.tool);
         if (loadId !== latestRecordLoadRef.current) {
@@ -310,6 +337,49 @@ export function useMemoryBrowser() {
     setReturnToPreviewPanel(false);
   }, []);
 
+  const handleSaveRecord = useCallback(
+    async (content: string) => {
+      if (!selectedPath || !selectedRecordId) {
+        return;
+      }
+      const tool = records.find((record) => record.id === selectedRecordId)?.tool;
+      setSavingRecord(true);
+      setError(null);
+      try {
+        const result = await updateRecord(selectedPath, selectedRecordId, content, tool);
+        setSelectedRecord(result.record);
+        setLastBackupPath(result.backupPath);
+        setUndoAvailable(true);
+        await reloadRecordsForProject(selectedPath);
+      } catch (err) {
+        setError(toErrorMessage(err, "Failed to save record"));
+      } finally {
+        setSavingRecord(false);
+      }
+    },
+    [records, reloadRecordsForProject, selectedPath, selectedRecordId],
+  );
+
+  const handleUndoRecord = useCallback(async () => {
+    setSavingRecord(true);
+    setError(null);
+    try {
+      await undoLastWrite();
+      setUndoAvailable(false);
+      setLastBackupPath(null);
+      if (selectedPath && selectedRecordId) {
+        const tool = records.find((record) => record.id === selectedRecordId)?.tool;
+        const full = await getRecord(selectedPath, selectedRecordId, tool);
+        setSelectedRecord(full);
+        await reloadRecordsForProject(selectedPath);
+      }
+    } catch (err) {
+      setError(toErrorMessage(err, "Failed to undo"));
+    } finally {
+      setSavingRecord(false);
+    }
+  }, [records, reloadRecordsForProject, selectedPath, selectedRecordId]);
+
   const isMemorySearchActive =
     searchQuery.trim().length > 0 ||
     searchHits !== null ||
@@ -359,6 +429,9 @@ export function useMemoryBrowser() {
     loadingProjects,
     loadingRecords,
     loadingRecord,
+    savingRecord,
+    undoAvailable,
+    lastBackupPath,
     scanResult,
     showScanPanel,
     returnToScanPanel,
@@ -388,5 +461,7 @@ export function useMemoryBrowser() {
     onBackToScanResults: handleBackToScanResults,
     onClosePreviewPanel: handleClosePreviewPanel,
     onBackToPreview: handleBackToPreview,
+    onSaveRecord: (content: string) => void handleSaveRecord(content),
+    onUndoRecord: () => void handleUndoRecord(),
   };
 }

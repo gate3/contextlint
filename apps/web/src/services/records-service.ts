@@ -1,5 +1,5 @@
-import type { MemoryRecord, SearchHit, ToolId } from "@meminspect/core";
-import { getJson } from "./http-client.js";
+import type { MemoryRecord, SearchHit, ToolId, UndoStatus } from "@meminspect/core";
+import { getJson, putJson } from "./http-client.js";
 
 export async function listProjectRecords(
   projectPath: string,
@@ -41,4 +41,27 @@ export async function searchProjectRecords(
     `/search?${params}`,
   );
   return hits;
+}
+
+export type UpdateRecordResponse = {
+  record: MemoryRecord;
+  backupPath: string;
+  undoId: string;
+};
+
+export async function updateRecord(
+  projectPath: string,
+  recordId: string,
+  content: string,
+  tool?: ToolId,
+): Promise<UpdateRecordResponse> {
+  const params = new URLSearchParams({ path: projectPath, id: recordId });
+  if (tool) {
+    params.set("tool", tool);
+  }
+  return putJson(`/records?${params}`, { content });
+}
+
+export async function getUndoStatus(): Promise<UndoStatus> {
+  return getJson("/undo");
 }

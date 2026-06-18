@@ -48,3 +48,17 @@ export type {
 } from "./preview/types.js";
 export { buildSessionPreview } from "./preview/assembler.js";
 export { isSessionLoadSource, SESSION_LOAD_SOURCES } from "./preview/layers.js";
+export type {
+  GuardedWriteOptions,
+  GuardedWriteResult,
+  UndoState,
+  UndoStatus,
+} from "./write-guard/types.js";
+export {
+  atomicWriteFile,
+  getUndoStatus,
+  guardedWrite,
+  performUndo,
+  WriteGuardError,
+} from "./write-guard/guard.js";
+export { isCursorProcessRunning } from "./write-guard/cursor-process.js";

@@ -25,6 +25,9 @@ export function MemoryBrowserView({
   loadingProjects,
   loadingRecords,
   loadingRecord,
+  savingRecord,
+  undoAvailable,
+  lastBackupPath,
   scanResult,
   showScanPanel,
   returnToScanPanel,
@@ -53,6 +56,8 @@ export function MemoryBrowserView({
   onBackToScanResults,
   onClosePreviewPanel,
   onBackToPreview,
+  onSaveRecord,
+  onUndoRecord,
 }: MemoryBrowserViewProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -129,11 +134,16 @@ export function MemoryBrowserView({
             <RecordDetailPanel
               record={selectedRecord}
               loading={loadingRecord}
+              saving={savingRecord}
+              undoAvailable={undoAvailable}
+              lastBackupPath={lastBackupPath}
               returnToScanPanel={returnToScanPanel}
               returnToPreviewPanel={returnToPreviewPanel}
               scanResult={scanResult}
               onBackToScanResults={onBackToScanResults}
               onBackToPreview={onBackToPreview}
+              onSaveRecord={onSaveRecord}
+              onUndoRecord={onUndoRecord}
             />
           )}
         </main>

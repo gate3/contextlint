@@ -8,6 +8,7 @@ import { registerRecordRoutes } from "./records.js";
 import { registerScanRoutes } from "./scan.js";
 import { registerSearchRoutes } from "./search.js";
 import { registerToolRoutes } from "./tools.js";
+import { registerUndoRoutes } from "./undo.js";
 
 export function registerRoutes(app: Hono, ctx: ServerContext): void {
   registerHealthRoutes(app);
@@ -18,6 +19,7 @@ export function registerRoutes(app: Hono, ctx: ServerContext): void {
   registerSearchRoutes(app, ctx);
   registerScanRoutes(app, ctx);
   registerPreviewRoutes(app, ctx);
+  registerUndoRoutes(app, ctx);
 }
 
 export type { ServerContext } from "./context.js";
