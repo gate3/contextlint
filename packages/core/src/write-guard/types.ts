@@ -17,7 +17,6 @@ export interface UndoState {
   projectPath: string;
   tool: ToolId;
   backupPath: string;
-  previousContent: string;
   writtenAt: string;
 }
 

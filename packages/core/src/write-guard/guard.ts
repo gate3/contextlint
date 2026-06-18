@@ -10,8 +10,17 @@ import { WriteGuardError } from "./types.js";
 export async function atomicWriteFile(filePath: string, content: string): Promise<void> {
   const tempPath = `${filePath}.meminspect.tmp`;
   await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(tempPath, content, "utf8");
-  await fs.rename(tempPath, filePath);
+  try {
+    await fs.writeFile(tempPath, content, "utf8");
+    await fs.rename(tempPath, filePath);
+  } catch (err) {
+    try {
+      await fs.unlink(tempPath);
+    } catch {
+      // Ignore cleanup failure to propagate the original error.
+    }
+    throw err;
+  }
 }
 
 async function readExistingContent(filePath: string): Promise<string> {
@@ -87,7 +96,6 @@ export async function guardedWrite(options: GuardedWriteOptions): Promise<Guarde
     projectPath: path.resolve(options.projectPath),
     tool: options.tool,
     backupPath,
-    previousContent,
     writtenAt: new Date().toISOString(),
   });
 
@@ -104,7 +112,8 @@ export async function performUndo(homedir: string): Promise<UndoStatus> {
     throw new WriteGuardError("No undo operation available", "UNDO_UNAVAILABLE");
   }
 
-  await atomicWriteFile(state.recordPath, state.previousContent);
+  const previousContent = await fs.readFile(state.backupPath, "utf8");
+  await atomicWriteFile(state.recordPath, previousContent);
   await clearUndoState(homedir);
   return { available: false };
 }

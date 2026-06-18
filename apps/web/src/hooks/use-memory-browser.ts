@@ -461,7 +461,7 @@ export function useMemoryBrowser() {
     onBackToScanResults: handleBackToScanResults,
     onClosePreviewPanel: handleClosePreviewPanel,
     onBackToPreview: handleBackToPreview,
-    onSaveRecord: (content: string) => void handleSaveRecord(content),
-    onUndoRecord: () => void handleUndoRecord(),
+    onSaveRecord: handleSaveRecord,
+    onUndoRecord: handleUndoRecord,
   };
 }
