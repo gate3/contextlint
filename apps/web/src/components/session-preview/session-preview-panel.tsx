@@ -206,7 +206,7 @@ function LayerSection({
   onToggle: () => void;
   onSelectRecord: (recordId: string) => void;
 }) {
-  const share = toolTotal > 0 ? Math.round((layer.tokens / toolTotal) * 100) : 0;
+  const share = toolTotal > 0 ? Math.min(Math.round((layer.tokens / toolTotal) * 100), 100) : 0;
   const isRules = layer.id === "cursor-rules";
 
   return (

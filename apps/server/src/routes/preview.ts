@@ -14,6 +14,15 @@ export function registerPreviewRoutes(app: Hono, ctx: ServerContext): void {
 
     const resolvedPath = path.resolve(projectPath);
     const tool = c.req.query("tool");
+    if (tool && tool !== "cursor" && tool !== "claude-code") {
+      return c.json(
+        {
+          error: "Invalid query parameter: tool must be 'cursor' or 'claude-code'",
+          code: "BAD_REQUEST",
+        },
+        400,
+      );
+    }
 
     try {
       const records = await loadScannedRecords(ctx.adapters, resolvedPath, tool);

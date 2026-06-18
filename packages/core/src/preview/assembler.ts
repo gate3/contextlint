@@ -85,7 +85,7 @@ function attachConflictFindings(
     return [];
   }
   return scanFindings.filter((finding) =>
-    finding.recordIds.some((recordId) => sessionRecordIds.has(recordId)),
+    finding.recordIds?.some((recordId) => sessionRecordIds.has(recordId)),
   );
 }
 
