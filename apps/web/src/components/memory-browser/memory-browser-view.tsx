@@ -1,4 +1,5 @@
 import { ScanResultsPanel } from "@/components/scan-results";
+import { SessionPreviewPanel } from "@/components/session-preview/session-preview-panel";
 import { MemoryBrowserHeader } from "./memory-browser-header";
 import { ProjectsPanel } from "./projects-panel";
 import { RecordDetailPanel } from "./record-detail-panel";
@@ -28,6 +29,10 @@ export function MemoryBrowserView({
   showScanPanel,
   returnToScanPanel,
   scanning,
+  previewResult,
+  showPreviewPanel,
+  returnToPreviewPanel,
+  previewing,
   onProjectSearchChange,
   onProjectSortChange,
   onSelectProject,
@@ -35,6 +40,7 @@ export function MemoryBrowserView({
   onOpenProjectPath,
   onTryDemo,
   onRunScan,
+  onRunPreview,
   onRecordFiltersChange,
   onSearchQueryChange,
   onRunSearch,
@@ -44,14 +50,18 @@ export function MemoryBrowserView({
   onSnoozeFinding,
   onCloseScanPanel,
   onBackToScanResults,
+  onClosePreviewPanel,
+  onBackToPreview,
 }: MemoryBrowserViewProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <MemoryBrowserHeader
         selectedPath={selectedPath}
         scanning={scanning}
+        previewing={previewing}
         onTryDemo={onTryDemo}
         onRunScan={onRunScan}
+        onRunPreview={onRunPreview}
         onOpenProjectPath={onOpenProjectPath}
         onRefreshProjects={onRefreshProjects}
       />
@@ -102,17 +112,26 @@ export function MemoryBrowserView({
               }
               scannedAt={scanResult?.scannedAt ?? new Date().toISOString()}
               loading={scanning}
-              onSelectFinding={onSelectFinding}
+              onSelectFinding={(finding) => onSelectFinding(finding, "scan")}
               onSnooze={onSnoozeFinding}
               onClose={onCloseScanPanel}
+            />
+          ) : showPreviewPanel ? (
+            <SessionPreviewPanel
+              preview={previewResult}
+              loading={previewing}
+              onSelectFinding={(finding) => onSelectFinding(finding, "preview")}
+              onClose={onClosePreviewPanel}
             />
           ) : (
             <RecordDetailPanel
               record={selectedRecord}
               loading={loadingRecord}
               returnToScanPanel={returnToScanPanel}
+              returnToPreviewPanel={returnToPreviewPanel}
               scanResult={scanResult}
               onBackToScanResults={onBackToScanResults}
+              onBackToPreview={onBackToPreview}
             />
           )}
         </main>

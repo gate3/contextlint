@@ -1,15 +1,17 @@
 import { OpenPathDialog } from "@/components/open-path-dialog";
 import { Button } from "@/components/ui/button";
 import { appIcon } from "@/lib/icons";
-import { FlaskConical, RefreshCw, ShieldCheck } from "lucide-react";
+import { FlaskConical, Layers, RefreshCw, ShieldCheck } from "lucide-react";
 
 const AppIcon = appIcon();
 
 interface MemoryBrowserHeaderProps {
   selectedPath: string | null;
   scanning: boolean;
+  previewing: boolean;
   onTryDemo: () => void;
   onRunScan: () => void;
+  onRunPreview: () => void;
   onOpenProjectPath: (path: string) => void;
   onRefreshProjects: () => void;
 }
@@ -17,8 +19,10 @@ interface MemoryBrowserHeaderProps {
 export function MemoryBrowserHeader({
   selectedPath,
   scanning,
+  previewing,
   onTryDemo,
   onRunScan,
+  onRunPreview,
   onOpenProjectPath,
   onRefreshProjects,
 }: MemoryBrowserHeaderProps) {
@@ -39,6 +43,15 @@ export function MemoryBrowserHeader({
         <Button variant="outline" size="sm" onClick={onTryDemo}>
           <FlaskConical className="size-4" />
           Try demo
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!selectedPath || previewing}
+          onClick={onRunPreview}
+        >
+          <Layers className="size-4" />
+          {previewing ? "Loading…" : "Session Preview"}
         </Button>
         <Button
           variant="default"

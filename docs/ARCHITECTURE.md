@@ -54,7 +54,19 @@ Deterministic rules (no LLM in v1): contradictions, cross-project leakage, stale
 
 ## Session Load Preview
 
-Assembles memory layers in the order each IDE loads them and estimates token cost per layer.
+`packages/core/src/preview/` assembles memory in IDE load order and estimates token cost per layer (chars ÷ 4). Session-load sources exclude SQLite KV and MCP config. Scan findings whose `recordIds` intersect session-load records are attached as **conflicts**.
+
+| Layer (Cursor) | Sources |
+|----------------|---------|
+| Project rules | `cursor-rules` |
+| Learned memories | `cursor-learned` |
+
+| Layer (Claude Code) | Sources |
+|---------------------|---------|
+| User CLAUDE.md | `claude-user` |
+| Parent CLAUDE.md | `claude-md-parent` |
+| Project CLAUDE.md | `claude-md`, `claude-md-local` |
+| Auto memory | `claude-auto-memory`, `claude-auto-memory-topic` |
 
 ## API (M1)
 
@@ -71,6 +83,7 @@ Assembles memory layers in the order each IDE loads them and estimates token cos
 | GET | `/projects/scan/preferences?path=` | Snooze / disabled-rule preferences |
 | POST | `/projects/scan/snooze` | Snooze a finding (`{ path, findingId }`) |
 | POST | `/projects/scan/disable-rule` | Disable or enable a rule (`{ path, ruleId, enabled? }`) |
+| GET | `/projects/preview?path=` | Session load preview + attached scan conflicts (`tool` optional) |
 
 Server binds to `127.0.0.1:3847` by default. User overrides live in `~/.meminspect/config.json`.
 

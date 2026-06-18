@@ -1,6 +1,7 @@
 import type { MemoryRecord, ProjectRef, ScanFinding, ToolId } from "@meminspect/core";
 import type { ProjectSort, RecordFiltersState } from "@/lib/memory-labels";
 import type { ScanResponse } from "@/services/scan-service";
+import type { PreviewResponse } from "@/services/preview-service";
 
 export type FlatRecord = MemoryRecord & { tool: ToolId };
 
@@ -34,6 +35,10 @@ export interface MemoryBrowserViewProps {
   showScanPanel: boolean;
   returnToScanPanel: boolean;
   scanning: boolean;
+  previewResult: PreviewResponse | null;
+  showPreviewPanel: boolean;
+  returnToPreviewPanel: boolean;
+  previewing: boolean;
   onProjectSearchChange: (value: string) => void;
   onProjectSortChange: (value: ProjectSort) => void;
   onSelectProject: (path: string) => void;
@@ -41,13 +46,16 @@ export interface MemoryBrowserViewProps {
   onOpenProjectPath: (path: string) => void;
   onTryDemo: () => void;
   onRunScan: () => void;
+  onRunPreview: () => void;
   onRecordFiltersChange: (filters: RecordFiltersState) => void;
   onSearchQueryChange: (value: string) => void;
   onRunSearch: () => void;
   onClearMemorySearch: () => void;
   onSelectRecord: (record: FlatRecord) => void;
-  onSelectFinding: (finding: ScanFinding) => void;
+  onSelectFinding: (finding: ScanFinding, from?: "scan" | "preview") => void;
   onSnoozeFinding: (finding: ScanFinding) => void;
   onCloseScanPanel: () => void;
   onBackToScanResults: () => void;
+  onClosePreviewPanel: () => void;
+  onBackToPreview: () => void;
 }
