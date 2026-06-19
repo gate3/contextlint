@@ -70,7 +70,7 @@ describe("WriteGuard", () => {
     ).rejects.toMatchObject({ code: "READ_ONLY" });
   });
 
-  it("refuses sqlite writes when disabled", async () => {
+  it("refuses sqlite-kv writes (file guard cannot update KV rows)", async () => {
     const homedir = makeTempHome();
     await expect(
       guardedWrite({
@@ -82,9 +82,9 @@ describe("WriteGuard", () => {
         kind: "sqlite-kv",
         writable: true,
         content: "nope",
-        sqliteWritesEnabled: false,
+        sqliteWritesEnabled: true,
       }),
-    ).rejects.toMatchObject({ code: "SQLITE_WRITE_DISABLED" });
+    ).rejects.toMatchObject({ code: "SQLITE_WRITE_UNSUPPORTED" });
   });
 
   it("writes atomically via temp file", async () => {

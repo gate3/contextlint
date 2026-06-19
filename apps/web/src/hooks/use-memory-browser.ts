@@ -58,15 +58,15 @@ export function useMemoryBrowser() {
   const [returnToPreviewPanel, setReturnToPreviewPanel] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [savingRecord, setSavingRecord] = useState(false);
-  const [undoAvailable, setUndoAvailable] = useState(false);
+  const [undoRecordId, setUndoRecordId] = useState<string | null>(null);
   const [lastBackupPath, setLastBackupPath] = useState<string | null>(null);
 
   const refreshUndoStatus = useCallback(async () => {
     try {
       const status = await getUndoStatus();
-      setUndoAvailable(status.available);
+      setUndoRecordId(status.available ? (status.recordId ?? null) : null);
     } catch {
-      setUndoAvailable(false);
+      setUndoRecordId(null);
     }
   }, []);
 
@@ -349,7 +349,7 @@ export function useMemoryBrowser() {
         const result = await updateRecord(selectedPath, selectedRecordId, content, tool);
         setSelectedRecord(result.record);
         setLastBackupPath(result.backupPath);
-        setUndoAvailable(true);
+        setUndoRecordId(selectedRecordId);
         await reloadRecordsForProject(selectedPath);
       } catch (err) {
         setError(toErrorMessage(err, "Failed to save record"));
@@ -365,7 +365,7 @@ export function useMemoryBrowser() {
     setError(null);
     try {
       await undoLastWrite();
-      setUndoAvailable(false);
+      setUndoRecordId(null);
       setLastBackupPath(null);
       if (selectedPath && selectedRecordId) {
         const tool = records.find((record) => record.id === selectedRecordId)?.tool;
@@ -436,7 +436,7 @@ export function useMemoryBrowser() {
     loadingRecords,
     loadingRecord,
     savingRecord,
-    undoAvailable,
+    undoAvailable: undoRecordId === selectedRecordId,
     lastBackupPath,
     scanResult,
     showScanPanel,

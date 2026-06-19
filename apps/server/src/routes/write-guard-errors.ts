@@ -6,6 +6,7 @@ export function writeGuardStatus(err: WriteGuardError): 403 | 404 | 409 | 500 {
       return 404;
     case "READ_ONLY":
     case "SQLITE_WRITE_DISABLED":
+    case "SQLITE_WRITE_UNSUPPORTED":
     case "CURSOR_RUNNING":
       return 403;
     case "UNDO_UNAVAILABLE":
