@@ -18,6 +18,7 @@ export interface UndoState {
   tool: ToolId;
   backupPath: string;
   writtenAt: string;
+  existed: boolean;
 }
 
 export interface UndoStatus {
@@ -29,6 +30,7 @@ export interface UndoStatus {
   tool?: ToolId;
   backupPath?: string;
   writtenAt?: string;
+  existed?: boolean;
 }
 
 export interface GuardedWriteOptions {

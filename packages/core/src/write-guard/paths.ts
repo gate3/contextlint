@@ -13,7 +13,10 @@ export function undoStatePath(homedir: string): string {
 
 /** Flatten an absolute path into a backup-safe relative artifact name. */
 export function backupArtifactName(targetPath: string): string {
-  return targetPath.replace(/^\//, "").replace(/\//g, "--");
+  return targetPath
+    .replace(/^([a-zA-Z]):/, "$1")
+    .replace(/^[\\/]/, "")
+    .replace(/[\\/]/g, "--");
 }
 
 export function backupArtifactPath(

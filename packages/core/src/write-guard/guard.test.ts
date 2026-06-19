@@ -98,4 +98,47 @@ describe("WriteGuard", () => {
     const homedir = makeTempHome();
     await expect(performUndo(homedir)).rejects.toBeInstanceOf(WriteGuardError);
   });
+
+  it("deletes the file on undo when the write created it", async () => {
+    const homedir = makeTempHome();
+    const targetPath = path.join(homedir, "project", "CLAUDE.md");
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+
+    await guardedWrite({
+      homedir,
+      projectPath: path.join(homedir, "project"),
+      recordId: "claude-md::CLAUDE.md",
+      tool: "claude-code",
+      targetPath,
+      kind: "markdown",
+      writable: true,
+      content: "new file",
+    });
+
+    await expect(fs.readFile(targetPath, "utf8")).resolves.toBe("new file");
+    await performUndo(homedir);
+    await expect(fs.readFile(targetPath, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("throws when backup is missing for an existing file undo", async () => {
+    const homedir = makeTempHome();
+    const targetPath = path.join(homedir, "project", "a.mdc");
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    await fs.writeFile(targetPath, "original", "utf8");
+
+    await guardedWrite({
+      homedir,
+      projectPath: path.join(homedir, "project"),
+      recordId: "cursor-rules::a.mdc",
+      tool: "cursor",
+      targetPath,
+      kind: "markdown",
+      writable: true,
+      content: "updated",
+    });
+
+    const status = await getUndoStatus(homedir);
+    await fs.unlink(status.backupPath!);
+    await expect(performUndo(homedir)).rejects.toMatchObject({ code: "UNDO_UNAVAILABLE" });
+  });
 });

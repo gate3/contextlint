@@ -41,5 +41,6 @@ export function toUndoStatus(state: UndoState | null): UndoStatus {
     tool: state.tool,
     backupPath: state.backupPath,
     writtenAt: state.writtenAt,
+    existed: state.existed,
   };
 }

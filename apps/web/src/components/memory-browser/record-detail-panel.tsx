@@ -10,22 +10,32 @@ import type { ScanResponse } from "@/services/scan-service";
 import { RecordEditor } from "./record-editor";
 import { RecordMetaBadges } from "./record-meta-badges";
 
-interface RecordDetailPanelProps {
-  record: MemoryRecord | null;
-  loading: boolean;
-  saving: boolean;
-  undoAvailable: boolean;
-  lastBackupPath: string | null;
-  returnToScanPanel: boolean;
-  returnToPreviewPanel: boolean;
-  scanResult: ScanResponse | null;
-  onBackToScanResults: () => void;
-  onBackToPreview: () => void;
-  onSaveRecord: (content: string) => void;
-  onUndoRecord: () => void;
+export function RecordDetailLoading() {
+  return (
+    <div className="space-y-4 p-6">
+      <Skeleton className="h-8 w-1/3" />
+      <Skeleton className="h-4 w-2/3" />
+      <Skeleton className="h-64 w-full" />
+    </div>
+  );
 }
 
-interface RecordDetailContentProps {
+export function RecordDetailEmpty() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+      <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+        <FileText className="size-7 text-muted-foreground" />
+      </div>
+      <h2 className="mt-4 text-base font-medium">No record selected</h2>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+        Choose a memory record from the list to inspect rules, learned memories, and Cursor
+        database entries.
+      </p>
+    </div>
+  );
+}
+
+interface RecordDetailPanelProps {
   record: MemoryRecord;
   saving: boolean;
   undoAvailable: boolean;
@@ -39,7 +49,7 @@ interface RecordDetailContentProps {
   onUndoRecord: () => void;
 }
 
-function RecordDetailContent({
+export function RecordDetailPanel({
   record,
   saving,
   undoAvailable,
@@ -51,7 +61,7 @@ function RecordDetailContent({
   onBackToPreview,
   onSaveRecord,
   onUndoRecord,
-}: RecordDetailContentProps) {
+}: RecordDetailPanelProps) {
   return (
     <>
       <div className="shrink-0 border-b border-border px-6 py-4">
@@ -113,61 +123,5 @@ function RecordDetailContent({
         </ScrollArea>
       </PanelBody>
     </>
-  );
-}
-
-export function RecordDetailPanel({
-  record,
-  loading,
-  saving,
-  undoAvailable,
-  lastBackupPath,
-  returnToScanPanel,
-  returnToPreviewPanel,
-  scanResult,
-  onBackToScanResults,
-  onBackToPreview,
-  onSaveRecord,
-  onUndoRecord,
-}: RecordDetailPanelProps) {
-  if (loading) {
-    return (
-      <div className="space-y-4 p-6">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
-  if (!record) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
-          <FileText className="size-7 text-muted-foreground" />
-        </div>
-        <h2 className="mt-4 text-base font-medium">No record selected</h2>
-        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          Choose a memory record from the list to inspect rules, learned memories, and Cursor
-          database entries.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <RecordDetailContent
-      record={record}
-      saving={saving}
-      undoAvailable={undoAvailable}
-      lastBackupPath={lastBackupPath}
-      returnToScanPanel={returnToScanPanel}
-      returnToPreviewPanel={returnToPreviewPanel}
-      scanResult={scanResult}
-      onBackToScanResults={onBackToScanResults}
-      onBackToPreview={onBackToPreview}
-      onSaveRecord={onSaveRecord}
-      onUndoRecord={onUndoRecord}
-    />
   );
 }

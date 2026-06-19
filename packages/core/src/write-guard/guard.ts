@@ -35,6 +35,15 @@ async function readExistingContent(filePath: string): Promise<string> {
   }
 }
 
+async function targetFileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function assertWritable(options: GuardedWriteOptions): void {
   if (!options.writable) {
     throw new WriteGuardError("This record is read-only", "READ_ONLY");
@@ -78,6 +87,7 @@ export async function guardedWrite(options: GuardedWriteOptions): Promise<Guarde
   await assertSafeToWrite(options);
 
   const targetPath = path.resolve(options.targetPath);
+  const existed = await targetFileExists(targetPath);
   const previousContent = await readExistingContent(targetPath);
   const { backupPath } = await createBackup(
     options.homedir,
@@ -97,6 +107,7 @@ export async function guardedWrite(options: GuardedWriteOptions): Promise<Guarde
     tool: options.tool,
     backupPath,
     writtenAt: new Date().toISOString(),
+    existed,
   });
 
   return { backupPath, undoId };
@@ -112,8 +123,30 @@ export async function performUndo(homedir: string): Promise<UndoStatus> {
     throw new WriteGuardError("No undo operation available", "UNDO_UNAVAILABLE");
   }
 
-  const previousContent = await fs.readFile(state.backupPath, "utf8");
-  await atomicWriteFile(state.recordPath, previousContent);
+  const existed = state.existed !== false;
+
+  if (!existed) {
+    try {
+      await fs.unlink(state.recordPath);
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== "ENOENT") {
+        throw err;
+      }
+    }
+  } else {
+    try {
+      const previousContent = await fs.readFile(state.backupPath, "utf8");
+      await atomicWriteFile(state.recordPath, previousContent);
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === "ENOENT") {
+        throw new WriteGuardError("Backup file missing or unavailable", "UNDO_UNAVAILABLE");
+      }
+      throw err;
+    }
+  }
+
   await clearUndoState(homedir);
   return { available: false };
 }

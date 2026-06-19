@@ -369,9 +369,15 @@ export function useMemoryBrowser() {
       setLastBackupPath(null);
       if (selectedPath && selectedRecordId) {
         const tool = records.find((record) => record.id === selectedRecordId)?.tool;
-        const full = await getRecord(selectedPath, selectedRecordId, tool);
-        setSelectedRecord(full);
-        await reloadRecordsForProject(selectedPath);
+        const updatedRecords = await reloadRecordsForProject(selectedPath);
+        const stillExists = updatedRecords.some((record) => record.id === selectedRecordId);
+        if (stillExists) {
+          const full = await getRecord(selectedPath, selectedRecordId, tool);
+          setSelectedRecord(full);
+        } else {
+          setSelectedRecord(null);
+          setSelectedRecordId(null);
+        }
       }
     } catch (err) {
       setError(toErrorMessage(err, "Failed to undo"));
