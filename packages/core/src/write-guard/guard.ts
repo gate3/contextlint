@@ -48,6 +48,13 @@ function assertWritable(options: GuardedWriteOptions): void {
   }
 }
 
+async function resolveWritePath(targetPath: string, existed: boolean): Promise<string> {
+  if (!existed) {
+    return targetPath;
+  }
+  return fs.realpath(targetPath);
+}
+
 async function createBackup(
   homedir: string,
   targetPath: string,
@@ -55,11 +62,20 @@ async function createBackup(
 ): Promise<{ backupPath: string; timestamp: string }> {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const backupPath = backupArtifactPath(homedir, timestamp, targetPath, backupDirOverride);
-  await fs.mkdir(path.dirname(backupPath), { recursive: true });
   if (await targetFileExists(targetPath)) {
+    await fs.mkdir(path.dirname(backupPath), { recursive: true });
     await fs.copyFile(targetPath, backupPath);
   }
   return { backupPath, timestamp };
+}
+
+async function removeBackupArtifact(backupPath: string): Promise<void> {
+  try {
+    await fs.unlink(backupPath);
+    await fs.rmdir(path.dirname(backupPath));
+  } catch {
+    // Best-effort cleanup after a successful undo.
+  }
 }
 
 export async function guardedWrite(options: GuardedWriteOptions): Promise<GuardedWriteResult> {
@@ -67,15 +83,16 @@ export async function guardedWrite(options: GuardedWriteOptions): Promise<Guarde
 
   const targetPath = path.resolve(options.targetPath);
   const existed = await targetFileExists(targetPath);
-  const { backupPath } = await createBackup(options.homedir, targetPath, options.backupDir);
+  const writePath = await resolveWritePath(targetPath, existed);
+  const { backupPath } = await createBackup(options.homedir, writePath, options.backupDir);
 
-  await atomicWriteFile(targetPath, options.content);
+  await atomicWriteFile(writePath, options.content);
 
   const undoId = randomUUID();
   await saveUndoState(options.homedir, {
     undoId,
     recordId: options.recordId,
-    recordPath: targetPath,
+    recordPath: writePath,
     projectPath: path.resolve(options.projectPath),
     tool: options.tool,
     backupPath,
@@ -109,7 +126,8 @@ export async function performUndo(homedir: string): Promise<UndoStatus> {
     }
   } else {
     try {
-      await fs.copyFile(state.backupPath, state.recordPath);
+      const backupContent = await fs.readFile(state.backupPath);
+      await atomicWriteFile(state.recordPath, backupContent);
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code;
       if (code === "ENOENT") {
@@ -120,6 +138,9 @@ export async function performUndo(homedir: string): Promise<UndoStatus> {
   }
 
   await clearUndoState(homedir);
+  if (existed) {
+    await removeBackupArtifact(state.backupPath);
+  }
   return { available: false };
 }
 

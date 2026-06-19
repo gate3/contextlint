@@ -82,7 +82,6 @@ describe("WriteGuard", () => {
         kind: "sqlite-kv",
         writable: true,
         content: "nope",
-        sqliteWritesEnabled: true,
       }),
     ).rejects.toMatchObject({ code: "SQLITE_WRITE_UNSUPPORTED" });
   });

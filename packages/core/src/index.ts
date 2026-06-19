@@ -61,4 +61,3 @@ export {
   performUndo,
   WriteGuardError,
 } from "./write-guard/guard.js";
-export { isCursorProcessRunning } from "./write-guard/cursor-process.js";

@@ -42,7 +42,6 @@ export interface GuardedWriteOptions {
   kind: "markdown" | "json" | "sqlite-kv";
   writable: boolean;
   content: string;
-  sqliteWritesEnabled?: boolean;
   backupDir?: string;
 }
 

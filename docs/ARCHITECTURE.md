@@ -72,11 +72,10 @@ Deterministic rules (no LLM in v1): contradictions, cross-project leakage, stale
 
 `packages/core/src/write-guard/` handles all memory mutations:
 
-1. Refuse read-only records and SQLite KV unless `safety.sqliteWrites` is enabled in config
-2. Refuse SQLite writes while Cursor is running (best-effort process check)
-3. Backup original content to `~/.meminspect/backups/<timestamp>/`
-4. Atomic write to target file
-5. Store single-step undo in `~/.meminspect/undo.json`
+1. Refuse read-only records and SQLite KV (KV edits require adapter-level support, not file writes)
+2. Backup existing files to `~/.meminspect/backups/<timestamp>/` via `fs.copyFile`
+3. Atomic write to target file (follows symlinks to the real path when the file already exists)
+4. Store single-step undo in `~/.meminspect/undo.json`; undo removes the backup artifact after restore
 
 ## API (M1)
 

@@ -41,9 +41,8 @@ export function RecordEditor({
         <Separator />
         <CardContent className="space-y-3 pt-4">
           <p className="text-xs text-muted-foreground">
-            This record is read-only in Meminspect. Cursor SQLite entries cannot be edited unless
-            you opt in via <code className="font-mono">safety.sqliteWrites</code> in{" "}
-            <code className="font-mono">~/.meminspect/config.json</code>.
+            This record is read-only in Meminspect. Cursor SQLite database entries are view-only in
+            M4; editing is limited to markdown and JSON memory files.
           </p>
           {isRecordEmpty(record) ? (
             <p className="text-sm text-muted-foreground italic">This file is empty.</p>
@@ -88,6 +87,14 @@ export function RecordEditor({
         <textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+              event.preventDefault();
+              if (dirty && !saving) {
+                onSave(draft);
+              }
+            }
+          }}
           spellCheck={false}
           className={cn(
             "min-h-[320px] w-full resize-y rounded-md border border-input bg-background px-3 py-2",

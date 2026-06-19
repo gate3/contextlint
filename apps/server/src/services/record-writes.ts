@@ -55,7 +55,6 @@ export async function updateProjectRecord(
     kind: record.kind,
     writable: record.metadata.writable,
     content,
-    sqliteWritesEnabled: config.safety?.sqliteWrites === true,
     backupDir: config.safety?.backupDir,
   });
 
