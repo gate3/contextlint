@@ -31,6 +31,9 @@ export interface MemoryBrowserViewProps {
   loadingProjects: boolean;
   loadingRecords: boolean;
   loadingRecord: boolean;
+  savingRecord: boolean;
+  undoAvailable: boolean;
+  lastBackupPath: string | null;
   scanResult: ScanResponse | null;
   showScanPanel: boolean;
   returnToScanPanel: boolean;
@@ -59,4 +62,6 @@ export interface MemoryBrowserViewProps {
   onBackToScanResults: () => void;
   onClosePreviewPanel: () => void;
   onBackToPreview: () => void;
+  onSaveRecord: (content: string) => void;
+  onUndoRecord: () => void;
 }

@@ -2,7 +2,7 @@ import { ScanResultsPanel } from "@/components/scan-results";
 import { SessionPreviewPanel } from "@/components/session-preview/session-preview-panel";
 import { MemoryBrowserHeader } from "./memory-browser-header";
 import { ProjectsPanel } from "./projects-panel";
-import { RecordDetailPanel } from "./record-detail-panel";
+import { RecordDetailEmpty, RecordDetailLoading, RecordDetailPanel } from "./record-detail-panel";
 import { RecordsPanel } from "./records-panel";
 import type { MemoryBrowserViewProps } from "./types";
 
@@ -25,6 +25,9 @@ export function MemoryBrowserView({
   loadingProjects,
   loadingRecords,
   loadingRecord,
+  savingRecord,
+  undoAvailable,
+  lastBackupPath,
   scanResult,
   showScanPanel,
   returnToScanPanel,
@@ -53,6 +56,8 @@ export function MemoryBrowserView({
   onBackToScanResults,
   onClosePreviewPanel,
   onBackToPreview,
+  onSaveRecord,
+  onUndoRecord,
 }: MemoryBrowserViewProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -125,15 +130,23 @@ export function MemoryBrowserView({
               onSelectFinding={(finding) => onSelectFinding(finding, "preview")}
               onClose={onClosePreviewPanel}
             />
+          ) : loadingRecord ? (
+            <RecordDetailLoading />
+          ) : !selectedRecord ? (
+            <RecordDetailEmpty />
           ) : (
             <RecordDetailPanel
               record={selectedRecord}
-              loading={loadingRecord}
+              saving={savingRecord}
+              undoAvailable={undoAvailable}
+              lastBackupPath={lastBackupPath}
               returnToScanPanel={returnToScanPanel}
               returnToPreviewPanel={returnToPreviewPanel}
               scanResult={scanResult}
               onBackToScanResults={onBackToScanResults}
               onBackToPreview={onBackToPreview}
+              onSaveRecord={onSaveRecord}
+              onUndoRecord={onUndoRecord}
             />
           )}
         </main>

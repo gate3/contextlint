@@ -68,6 +68,15 @@ Deterministic rules (no LLM in v1): contradictions, cross-project leakage, stale
 | Project CLAUDE.md | `claude-md`, `claude-md-local` |
 | Auto memory | `claude-auto-memory`, `claude-auto-memory-topic` |
 
+## Write Guard
+
+`packages/core/src/write-guard/` handles all memory mutations:
+
+1. Refuse read-only records and SQLite KV (KV edits require adapter-level support, not file writes)
+2. Backup existing files to `~/.meminspect/backups/<timestamp>/` via `fs.copyFile`
+3. Atomic write to target file (follows symlinks to the real path when the file already exists)
+4. Store single-step undo in `~/.meminspect/undo.json`; undo removes the backup artifact after restore
+
 ## API (M1)
 
 | Method | Path | Purpose |
@@ -84,6 +93,9 @@ Deterministic rules (no LLM in v1): contradictions, cross-project leakage, stale
 | POST | `/projects/scan/snooze` | Snooze a finding (`{ path, findingId }`) |
 | POST | `/projects/scan/disable-rule` | Disable or enable a rule (`{ path, ruleId, enabled? }`) |
 | GET | `/projects/preview?path=` | Session load preview + attached scan conflicts (`tool` optional) |
+| PUT | `/records?path=&id=` | Update record content via WriteGuard (`{ content }` body) |
+| GET | `/undo` | Undo availability for last write |
+| POST | `/undo` | Restore last write from backup |
 
 Server binds to `127.0.0.1:3847` by default. User overrides live in `~/.meminspect/config.json`.
 
